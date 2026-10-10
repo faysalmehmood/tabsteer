@@ -67,6 +67,13 @@ Requires Node.js 18 or newer and a Chromium-family browser (Chrome, Brave, Edge,
 **1. Install the command-line tool**
 
 ```sh
+npm install -g tabsteer
+tabsteer install
+```
+
+Or from source:
+
+```sh
 git clone https://github.com/faysalmehmood/tabsteer.git
 cd tabsteer
 ./install.sh
@@ -75,7 +82,7 @@ cd tabsteer
 **2. Load the extension**
 
 1. Open `chrome://extensions` and turn on **Developer mode**.
-2. Click **Load unpacked** and select the `extension` folder of this repository.
+2. Click **Load unpacked** and select the `extension` folder. `tabsteer install` prints its full path.
 
 **3. Check the setup**
 
