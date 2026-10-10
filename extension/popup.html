@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Tab Steer</title>
+  <style>
+    :root {
+      --bg: #ffffff; --panel: #f3f4f6; --text: #111827; --muted: #6b7280;
+      --line: #e5e7eb; --accent: #2563eb; --accent-text: #ffffff;
+      --ok: #15803d; --warn: #b45309; --bad: #b91c1c;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #17181c; --panel: #23252b; --text: #f3f4f6; --muted: #9ca3af;
+        --line: #33363e; --accent: #60a5fa; --accent-text: #0b1220;
+        --ok: #4ade80; --warn: #fbbf24; --bad: #f87171;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      width: 320px; margin: 0; padding: 14px;
+      font: 13px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg); color: var(--text);
+    }
+    header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+    header img { width: 22px; height: 22px; }
+    header h1 { font-size: 14px; margin: 0; flex: 1; }
+    .pill { font-size: 11px; font-weight: 600; display: flex; align-items: center; gap: 5px; }
+    .pill::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+    .pill.ok { color: var(--ok); } .pill.warn { color: var(--warn); } .pill.bad { color: var(--bad); }
+    section { background: var(--panel); border-radius: 8px; padding: 10px; margin-bottom: 10px; }
+    .site { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .facts { color: var(--muted); font-size: 12px; margin: 2px 0 8px; }
+    button {
+      font: inherit; width: 100%; padding: 7px 10px; border-radius: 6px; cursor: pointer;
+      border: 1px solid var(--line); background: var(--bg); color: var(--text);
+    }
+    button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); font-weight: 600; }
+    button + button { margin-top: 6px; }
+    button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .link { background: none; border: none; color: var(--accent); padding: 4px 0 0; text-align: left; width: auto; }
+    code { font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--bg); padding: 1px 4px; border-radius: 4px; }
+    .note { color: var(--muted); font-size: 12px; margin: 0; }
+    footer { display: flex; align-items: center; gap: 8px; }
+    footer .note { flex: 1; }
+    footer button { width: auto; }
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+  <header>
+    <img src="icons/icon48.png" alt="">
+    <h1>Tab Steer</h1>
+    <span class="pill" id="status">…</span>
+  </header>
+
+  <section id="setup" hidden>
+    <p class="note"><strong>The command-line companion isn't running.</strong><br>
+      In a terminal, run <code>./install.sh</code> from the Tab Steer folder, then reopen this window.</p>
+    <p class="note" id="host-error"></p>
+  </section>
+
+  <section id="tab">
+    <div class="site" id="site">…</div>
+    <div class="facts" id="facts"></div>
+    <button class="primary" id="share" hidden>Share this tab with your agent</button>
+    <button id="unshare" hidden>Stop sharing this tab</button>
+    <button id="allow" hidden></button>
+    <button id="revoke" hidden></button>
+    <button class="link" id="allow-all" hidden>Allow on all sites instead</button>
+  </section>
+
+  <footer>
+    <p class="note" id="count"></p>
+    <button id="pause">Pause</button>
+  </footer>
+
+  <script src="popup.js"></script>
+</body>
+</html>

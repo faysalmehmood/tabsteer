@@ -1,0 +1,38 @@
+{
+  "manifest_version": 3,
+  "name": "Tab Steer",
+  "version": "0.1.0",
+  "description": "Hand your coding agent a tab, not your browser. Lets a local command-line tool control only the tabs and sites you share.",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAlUIpvFLr8ZMJ97aqVigsVSvU3f2F2CEORQNYukJ85wV4jpGfeEXXnyYRkJlVKxV0tFVx3xqUTE2qq5JE3Cc4Fk33TBEGW5fDa7K9WurMhDnW6iOJTElv+qfFeMnauJToNbB25bOAbskDDl916cV3eTk2hP0JgQfJNbOTNbjMFAsO9ViJ/SnDsF5CaNNakeb0Bt7UdXyiC1BwXTnFkDusa9J67EkA1E/c0p1AQUMof89e6gmaSpWOCA0k4v1AKA+vKAZFBiEzobMwwcka5AldhLcNWwk9sn+8T2RlSHmfYhGxmvsQaDphve36vkxsL57nupk1Pyd0xeAuzhfrc+i1xQIDAQAB",
+  "minimum_chrome_version": "116",
+  "permissions": [
+    "nativeMessaging",
+    "scripting",
+    "tabGroups",
+    "activeTab",
+    "storage",
+    "alarms"
+  ],
+  "optional_host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Tab Steer",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}
