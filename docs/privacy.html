@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Privacy policy | Tab Steer</title>
+  <meta name="description" content="Tab Steer collects nothing and sends nothing to its authors or any third party.">
+  <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+  <style>
+    :root { --bg: #ffffff; --text: #0f172a; --muted: #55607a; --line: #e3e8f1; --accent: #2563eb; }
+    @media (prefers-color-scheme: dark) { :root { --bg: #0b1020; --text: #eef2fb; --muted: #a3b0cc; --line: #232e4a; --accent: #6ea4ff; } }
+    body { margin: 0; background: var(--bg); color: var(--text); font: 17px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    main { max-width: 720px; margin: 0 auto; padding: 24px 20px 64px; }
+    a { color: var(--accent); }
+    .home { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text); font-weight: 600; margin-bottom: 32px; }
+    .home img { width: 28px; height: 28px; }
+    h1 { font-size: 34px; letter-spacing: -0.01em; margin: 0 0 6px; }
+    h2 { font-size: 20px; margin: 32px 0 6px; }
+    .muted { color: var(--muted); }
+    p { margin: 0 0 12px; }
+  </style>
+</head>
+<body>
+<main>
+  <a class="home" href="./"><img src="assets/logo.svg" alt="">Tab Steer</a>
+  <h1>Privacy policy</h1>
+  <p class="muted">Last updated 10 October 2026</p>
+
+  <p>Tab Steer collects nothing and sends nothing to its authors or to any third party. There is no telemetry, no analytics and no remote server.</p>
+
+  <h2>What the extension handles</h2>
+  <p>When a command is run, the extension reads content from tabs you have shared, on sites you have allowed, and passes it to the <code>tabsteer</code> program on your own computer. That content can include page text, link addresses, form values and screenshots. Values of password, payment and one-time-code fields are never included.</p>
+
+  <h2>Where it goes</h2>
+  <p>To the local program that asked for it, over a private connection on your machine. What that program, typically an AI agent, does with the content is governed by that program's own privacy terms.</p>
+
+  <h2>What is stored</h2>
+  <p>One setting in the browser's local extension storage: whether Tab Steer is paused. Diagnostic logging is off by default. When you turn it on, it records command names and times in a file on your computer, never page content.</p>
+
+  <h2>Sale and use of data</h2>
+  <p>No user data is sold, transferred to third parties, or used for advertising, creditworthiness or any purpose unrelated to the extension's single purpose: letting a local command-line tool control the tabs you share.</p>
+
+  <h2>Your controls</h2>
+  <p>You can stop sharing a tab, revoke a site, pause, or remove the extension at any time. Running <code>tabsteer uninstall</code> removes everything outside the browser.</p>
+
+  <h2>Contact</h2>
+  <p><a href="mailto:tabsteer@conceptlix.com">tabsteer@conceptlix.com</a>, or open an issue on <a href="https://github.com/faysalmehmood/tabsteer">GitHub</a>.</p>
+</main>
+</body>
+</html>
