@@ -105,16 +105,14 @@ The extension needs its companion program, which is open source.
 
 1. On macOS or Linux with Node.js 18 or newer, run:
    `git clone https://github.com/faysalmehmood/tabsteer.git && cd tabsteer && ./install.sh`
-2. Add the store extension ID to the allowed list: this is done in the published companion from version 0.1.1 onward, so no manual step is needed.
-3. Install the extension. The welcome page shows "Connected" within a minute.
+2. Install the extension from its store page.
+3. The welcome page opens and shows "Connected" within a minute.
 4. Open https://example.com, click the Tab Steer toolbar icon, choose "Share this tab with your agent" and accept the site permission prompt.
 5. In a terminal run `tabsteer read`. The page content is printed. Run `tabsteer click "More information"` (or the link text shown) to see an action.
 6. Click "Pause" in the popup and run `tabsteer read` again. It is refused.
 
 No account or login is required.
 
-## After the first upload
+## Store item
 
-The store assigns the extension its own ID. Add that ID to `EXTENSION_IDS` in
-`lib/common.js`, release the companion as 0.1.1, and only then submit for review,
-so that step 2 above is true.
+Item ID: `mkpmilnglglhiaeojeeioafmbjjghmed`. The companion already allows this ID.
