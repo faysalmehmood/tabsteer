@@ -49,9 +49,10 @@ function connect() {
 }
 
 chrome.runtime.onStartup.addListener(connect);
-chrome.runtime.onInstalled.addListener(() => {
+chrome.runtime.onInstalled.addListener((details) => {
   chrome.alarms.create('reconnect', { periodInMinutes: 1 });
   connect();
+  if (details.reason === 'install') chrome.tabs.create({ url: 'welcome.html' });
 });
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === 'reconnect') connect();

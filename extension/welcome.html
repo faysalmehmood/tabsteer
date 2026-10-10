@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Welcome to Tab Steer</title>
+  <link rel="icon" href="icons/icon32.png">
+  <style>
+    :root { --bg: #ffffff; --panel: #f5f7fb; --text: #0f172a; --muted: #55607a; --line: #e3e8f1; --accent: #2563eb; --ok: #15803d; --bad: #b91c1c; --term: #0b1220; --term-text: #d7e0f2; }
+    @media (prefers-color-scheme: dark) { :root { --bg: #0b1020; --panel: #121a30; --text: #eef2fb; --muted: #a3b0cc; --line: #232e4a; --accent: #6ea4ff; --ok: #4ade80; --bad: #f87171; --term: #060a16; } }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    main { max-width: 680px; margin: 0 auto; padding: 48px 20px 72px; }
+    header { display: flex; align-items: center; gap: 14px; margin-bottom: 8px; }
+    header img { width: 48px; height: 48px; }
+    h1 { font-size: 30px; margin: 0; letter-spacing: -0.01em; }
+    .lede { color: var(--muted); margin: 0 0 28px; }
+    .status { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-radius: 10px; background: var(--panel); border: 1px solid var(--line); font-weight: 600; margin-bottom: 28px; }
+    .status::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: currentColor; flex: none; }
+    .status.ok { color: var(--ok); } .status.bad { color: var(--bad); }
+    .status span { color: var(--text); font-weight: 400; }
+    ol { padding: 0; margin: 0; list-style: none; counter-reset: step; }
+    li { counter-increment: step; position: relative; padding: 0 0 26px 48px; }
+    li::before { content: counter(step); position: absolute; left: 0; top: 0; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: var(--accent); color: var(--bg); font-weight: 700; font-size: 14px; }
+    h2 { font-size: 18px; margin: 2px 0 6px; }
+    p { margin: 0 0 10px; color: var(--muted); }
+    pre { margin: 0 0 10px; background: var(--term); color: var(--term-text); padding: 14px 16px; border-radius: 10px; overflow-x: auto; font: 13px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace; }
+    code { font: 0.9em ui-monospace, SFMono-Regular, Menlo, monospace; }
+    a { color: var(--accent); }
+  </style>
+</head>
+<body>
+<main>
+  <header><img src="icons/icon128.png" alt=""><h1>Welcome to Tab Steer</h1></header>
+  <p class="lede">Tab Steer lets a command-line tool on this computer control the tabs you choose to share. It needs a small companion program to work.</p>
+
+  <div class="status bad" id="status" role="status">Checking<span></span></div>
+
+  <ol>
+    <li>
+      <h2>Install the companion</h2>
+      <p>In a terminal (Node.js 18 or newer required):</p>
+      <pre>git clone https://github.com/faysalmehmood/tabsteer.git
+cd tabsteer
+./install.sh</pre>
+      <p>The status above turns green within a minute of installing. Run <code>tabsteer doctor</code> if it does not.</p>
+    </li>
+    <li>
+      <h2>Share a tab</h2>
+      <p>Open a page, click the Tab Steer icon in the toolbar and choose <strong>Share this tab with your agent</strong>. Shared tabs sit in a tab group named "Tab Steer". Tab Steer starts with access to no sites, so you allow each site the first time.</p>
+    </li>
+    <li>
+      <h2>Let your agent use it</h2>
+      <p>Any agent that can run a shell command can now run <code>tabsteer read</code>, <code>tabsteer click</code> and the rest. The toolbar icon also has a <strong>Pause</strong> button that stops everything.</p>
+    </li>
+  </ol>
+
+  <p><a href="https://github.com/faysalmehmood/tabsteer#readme">Full guide</a> · <a href="https://github.com/faysalmehmood/tabsteer/blob/main/docs/threat-model.md">What Tab Steer does and does not protect</a></p>
+</main>
+<script src="welcome.js"></script>
+</body>
+</html>

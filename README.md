@@ -11,7 +11,7 @@
 ![Platforms](https://img.shields.io/badge/platform-macOS%20%7C%20Linux-lightgrey.svg)
 ![Version](https://img.shields.io/badge/version-0.1.0-informational.svg)
 
-[Website](https://faysalmehmood.github.io/tabsteer/) · [Install](#install) · [Commands](#commands) · [Safety model](#safety-model) · [Threat model](docs/threat-model.md)
+[Website](https://tabsteer.conceptlix.com) · [Install](#install) · [Commands](#commands) · [Safety model](#safety-model) · [Threat model](docs/threat-model.md)
 
 </div>
 

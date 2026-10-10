@@ -5,3 +5,4 @@ key.json
 *.zip
 tabsteer-snap.png
 .DS_Store
+dist/

@@ -4,7 +4,7 @@
   "description": "Hand your coding agent a tab, not your browser. A CLI that controls only the Chrome tabs and sites you share.",
   "license": "Apache-2.0",
   "author": "Faysal Mehmood",
-  "homepage": "https://github.com/faysalmehmood/tabsteer#readme",
+  "homepage": "https://tabsteer.conceptlix.com",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/faysalmehmood/tabsteer.git"
