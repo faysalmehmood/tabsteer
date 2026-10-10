@@ -1,7 +1,7 @@
 # Chrome Web Store listing
 
 Copy these into the Developer Dashboard. Files to upload are in this folder,
-and the zip comes from `scripts/package-extension.sh`.
+and the zip comes from `scripts/package-extension.sh` (current: `dist/tabsteer-extension-0.1.1.zip`).
 
 ## Store listing tab
 
@@ -104,7 +104,7 @@ https://tabsteer.conceptlix.com/privacy.html
 The extension needs its companion program, which is open source.
 
 1. On macOS or Linux with Node.js 18 or newer, run:
-   `git clone https://github.com/faysalmehmood/tabsteer.git && cd tabsteer && ./install.sh`
+   `npm install -g tabsteer && tabsteer install`
 2. Install the extension from its store page.
 3. The welcome page opens and shows "Connected" within a minute.
 4. Open https://example.com, click the Tab Steer toolbar icon, choose "Share this tab with your agent" and accept the site permission prompt.

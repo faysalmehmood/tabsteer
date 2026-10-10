@@ -9,7 +9,7 @@
 [![Tests](https://github.com/faysalmehmood/tabsteer/actions/workflows/test.yml/badge.svg)](https://github.com/faysalmehmood/tabsteer/actions/workflows/test.yml)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 ![Platforms](https://img.shields.io/badge/platform-macOS%20%7C%20Linux-lightgrey.svg)
-![Version](https://img.shields.io/badge/version-0.1.0-informational.svg)
+![Version](https://img.shields.io/badge/version-0.1.1-informational.svg)
 
 [Website](https://tabsteer.conceptlix.com) · [Install](#install) · [Commands](#commands) · [Safety model](#safety-model) · [Threat model](docs/threat-model.md)
 

@@ -1,6 +1,6 @@
 {
   "name": "tabsteer",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Hand your coding agent a tab, not your browser. A CLI that controls only the Chrome tabs and sites you share.",
   "license": "Apache-2.0",
   "author": "Faysal Mehmood",
