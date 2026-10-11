@@ -160,7 +160,7 @@ Security issues: please report them privately, as described in [SECURITY.md](SEC
 
 ## Credits
 
-The idea of a CLI-first controller for the user's real browser was shown publicly by Ivan Leo, building on the approach of the OpenAI Codex Chrome extension. Tab Steer is an independent implementation, not affiliated with or endorsed by Google, OpenAI, Anthropic or anyone named here.
+The idea of a CLI-first controller for the user's real browser was shown publicly by [Ivan Leo](https://x.com/ivanleomk) ([GitHub](https://github.com/ivanleomk)), building on the approach of the OpenAI Codex Chrome extension. Tab Steer is an independent implementation, not affiliated with or endorsed by Google, OpenAI, Anthropic or anyone named here.
 
 ## License
 
