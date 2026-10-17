@@ -25,11 +25,14 @@ English
 
 Tab Steer lets AI coding agents work in your real, logged-in browser, limited to the tabs and sites you choose.
 
-It pairs this extension with a small open-source command-line tool on your computer. Any agent that can run a shell command (Claude Code, Antigravity, Codex, Cursor, or a script) can then read a page as compact Markdown and click, type and wait on it.
+It pairs this extension with a small open-source command-line tool on your computer. Any agent that can run a shell command (Claude Code, Antigravity, Codex, Cursor, or a script) can then read a page as compact Markdown, click, type, wait and take screenshots.
+
+Typical uses: checking the app you are building on localhost, reading pages behind your login, reproducing a bug step by step, and routine chores in web dashboards.
 
 YOU STAY IN CONTROL
-- Shared tabs only. The agent acts only on tabs in the "Tab Steer" tab group. Drag a tab in to share it, drag it out to stop.
-- Allowed sites only. The extension installs with access to no sites. You grant each site from the toolbar icon.
+- Shared tabs only. The agent acts only on tabs in the "Tab Steer" tab group. Click "Share this tab" in the toolbar popup, or drag a tab into the group. Drag it out to stop.
+- Allowed sites only. Tab Steer asks Chrome for site access once, when you click "Turn on". It then works only on sites you allow, and sharing a tab allows its site. Remove a site at any time.
+- See everything. The Activity side panel lists every action the agent takes, live. Typed text is never logged.
 - One-click pause. Every command is refused until you resume.
 - Passwords stay hidden. Values of password, payment and one-time-code fields are never returned.
 - No arbitrary code. There is no command to run scripts in your pages.
