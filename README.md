@@ -6,159 +6,100 @@
 
 **Hand your coding agent a tab, not your browser.**
 
-[![Tests](https://github.com/faysalmehmood/tabsteer/actions/workflows/test.yml/badge.svg)](https://github.com/faysalmehmood/tabsteer/actions/workflows/test.yml)
-[![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
-![Platforms](https://img.shields.io/badge/platform-macOS%20%7C%20Linux-lightgrey.svg)
 [![Chrome Web Store](https://img.shields.io/chrome-web-store/v/mkpmilnglglhiaeojeeioafmbjjghmed?label=chrome%20web%20store)](https://chromewebstore.google.com/detail/tab-steer/mkpmilnglglhiaeojeeioafmbjjghmed)
 [![npm](https://img.shields.io/npm/v/tabsteer.svg)](https://www.npmjs.com/package/tabsteer)
+[![Tests](https://github.com/faysalmehmood/tabsteer/actions/workflows/test.yml/badge.svg)](https://github.com/faysalmehmood/tabsteer/actions/workflows/test.yml)
+[![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 
-[Website](https://tabsteer.conceptlix.com) · [Chrome Web Store](https://chromewebstore.google.com/detail/tab-steer/mkpmilnglglhiaeojeeioafmbjjghmed) · [Install](#install) · [Commands](#commands) · [Safety model](#safety-model) · [Threat model](docs/threat-model.md)
+[Website](https://tabsteer.conceptlix.com) · [Get started](#get-started) · [Commands](#commands) · [How you stay in control](#how-you-stay-in-control)
 
 </div>
 
-Tab Steer is a Chrome extension and a command-line tool. Together they let any AI agent that can run a shell command read and act on pages in your real, logged-in browser. The agent reaches only the tabs you share and the sites you allow.
+Tab Steer lets your coding agent (Claude Code, Antigravity, Codex, Cursor, or any tool that can run a shell command) work in your real, logged-in Chrome. It reaches only the tabs you share, on the sites you allow, and you can see and stop everything it does.
 
 ```console
-$ tabsteer open news.ycombinator.com
-Opened tab 1853312301
-
+$ tabsteer open localhost:5173/checkout
 $ tabsteer read
-# Hacker News
-[new](newest) @kqzbwr2 | [past](front) @kqzbwr3 | [comments](newcomments) @kqzbwr4 ...
-
-$ tabsteer click @kqzbwr2
-Clicked link "new" @kqzbwr2
+# Checkout
+[input:email "Email" value="" @kqzbwr4] [button "Place order" @kqzbwr9]
+$ tabsteer click @kqzbwr9
+Clicked button "Place order" @kqzbwr9
 ```
 
-> [!NOTE]
-> Version 0.1 is an early release. The command-line tool runs on macOS and Linux.
+**Typical uses:** check your app after a change, read a ticket or error page that needs your login, reproduce a bug in your real session, or do repetitive work in a web console that has no API.
 
-## Why Tab Steer
+## Get started
 
-| | |
-| --- | --- |
-| **Your real session** | Works in the browser where you are already signed in. No separate, logged-out automation browser. |
-| **No context overhead** | It is a CLI, not a tool server. Nothing is added to the model's context until a command runs. |
-| **Any agent** | Claude Code, Antigravity, Codex, Cursor, or a shell script. |
-| **Limits first** | Starts with no access. You decide which tabs and which sites, and you can pause at any time. |
-| **No dependencies** | The CLI and host use only the Node.js standard library. |
+You need Chrome (or another Chromium browser) and Node.js 18 or newer, on macOS or Linux.
 
-## Safety model
+1. **Add the extension** from the [Chrome Web Store](https://chromewebstore.google.com/detail/tab-steer/mkpmilnglglhiaeojeeioafmbjjghmed). A welcome page opens.
+2. **Install the companion** in a terminal:
+   ```sh
+   npm install -g tabsteer && tabsteer install
+   ```
+3. **Turn it on and share a tab.** Click **Turn on** on the welcome page (Chrome asks once). Then, on any page, click the Tab Steer icon and choose **Share this tab with your agent**.
 
-<img src="docs/assets/popup.png" width="300" align="right" alt="The Tab Steer popup: a shared tab on an allowed site, with controls to stop sharing, revoke the site, and pause.">
+`tabsteer doctor` checks the setup. `tabsteer uninstall` removes everything outside the browser.
 
-An agent in your logged-in browser acts as you, so every limit is held in the browser, where the agent cannot change it.
+**Teach your agent:** `tabsteer install --agent claude` or `--agent antigravity` installs a ready-made skill. For other agents, paste [docs/agent-snippet.md](docs/agent-snippet.md) into `AGENTS.md` or your rules file.
 
-- **Shared tabs only.** The agent acts only on tabs in the "Tab Steer" tab group. Drag a tab in to share it, drag it out to stop.
-- **Allowed sites only.** The extension installs with access to no sites. You grant each site from the toolbar icon.
-- **One-click pause.** Every command is refused until you resume.
-- **No network surface.** The CLI reaches the browser over a Unix socket only your user can open. Nothing listens on a port.
-- **Secrets withheld.** Values of password fields, and of fields recognised as payment or one-time-code fields, are never returned.
-- **No arbitrary code.** There is no `eval` command.
-- **No telemetry.** Nothing is collected or sent anywhere. See the [privacy policy](docs/PRIVACY.md).
+## How you stay in control
 
-Read the [threat model](docs/threat-model.md) before using Tab Steer on accounts that matter. Web pages can contain text written to manipulate an agent, and Tab Steer cannot tell whose instructions the agent is following.
+<img src="docs/assets/panel.png" width="280" align="right" alt="The Tab Steer side panel: a live log of the agent's actions, including one refused attempt, and the list of allowed sites.">
+
+- **Shared tabs only.** Your agent works only in tabs inside the "Tab Steer" tab group. Drag a tab out to stop sharing it.
+- **Allowed sites only.** Sharing a tab allows its site. You can remove sites at any time, and the agent cannot add any.
+- **See everything.** The Activity panel shows each action as it happens, including refused ones.
+- **Pause.** One click refuses every further command and discards the result of any already running.
+- **Secrets stay hidden.** Password values, and payment or one-time-code fields Tab Steer recognises, are never returned.
+- **Local only.** No network listener, no telemetry, no `eval`. Page content goes only to the program on your computer that asked for it. See the [privacy policy](docs/PRIVACY.md).
+
+Web pages can contain text written to mislead an agent, and an agent in your browser acts as you. Read the [threat model](docs/threat-model.md) before using Tab Steer on accounts that matter.
 
 <br clear="right">
-
-## Install
-
-Requires Node.js 18 or newer and a Chromium-family browser (Chrome, Brave, Edge, Vivaldi, Arc, Chromium).
-
-**1. Add the extension** from the [Chrome Web Store](https://chromewebstore.google.com/detail/tab-steer/mkpmilnglglhiaeojeeioafmbjjghmed).
-
-**2. Install the command-line tool**
-
-```sh
-npm install -g tabsteer
-tabsteer install
-```
-
-**3. Check the setup**
-
-```sh
-tabsteer doctor
-```
-
-Every line should show a tick. To remove everything outside the browser, run `tabsteer uninstall`.
-
-## Usage
-
-**Share a tab.** Click the Tab Steer toolbar icon on a tab and choose **Share this tab with your agent**. The agent can also open its own tab with `tabsteer open <url>`. The first time a site is used, you allow it from the same icon.
-
-**Teach your agent.** A ready-made skill ships in [`skills/tabsteer`](skills/tabsteer/SKILL.md).
-
-| Agent | Setup |
-| --- | --- |
-| Claude Code | `tabsteer install --agent claude` |
-| Antigravity | `tabsteer install --agent antigravity` |
-| Others | Paste [`docs/agent-snippet.md`](docs/agent-snippet.md) into `AGENTS.md` or your rules file |
 
 ## Commands
 
 | Command | Description |
 | --- | --- |
-| `tabsteer status` | Connection state, paused or not, number of shared tabs |
-| `tabsteer tabs` | List shared tabs and their ids |
-| `tabsteer open <url> [--background]` | Open a URL in a new shared tab |
-| `tabsteer navigate <url>` | Load a URL in a shared tab |
-| `tabsteer back` | Go back one page |
-| `tabsteer close` | Close a shared tab |
-| `tabsteer read [--offset N] [--limit N]` | Page as Markdown. Each control carries a ref such as `@kqzbwr12` |
-| `tabsteer click <ref\|text\|css=sel>` | Click one element. Ambiguous text returns candidates and clicks nothing |
-| `tabsteer type <text> [--into <ref>]` | Replace a field's content, or choose a `<select>` option |
-| `tabsteer press <key> [--into <ref>]` | Enter, Tab, Escape, Space, arrow keys, or one character |
-| `tabsteer scroll [up\|down\|top\|bottom] [px]` | Scroll the page |
-| `tabsteer wait <text\|ref\|css=sel> [--gone] [--timeout ms]` | Wait for something to appear or disappear |
-| `tabsteer snap [--out file.png]` | Screenshot the visible part of the tab. Needs "Allow on all sites", a Chrome rule |
+| `tabsteer tabs` | List shared tabs |
+| `tabsteer open <url>` / `navigate <url>` / `back` / `close` | Open, load, go back in, or close a shared tab |
+| `tabsteer read` | The page as Markdown. Each control carries a ref such as `@kqzbwr4` |
+| `tabsteer click <ref\|text>` | Click one element. Ambiguous text returns the candidates instead of guessing |
+| `tabsteer type <text> --into <ref>` | Fill a field or choose a `<select>` option |
+| `tabsteer press <key>` | Enter, Tab, Escape, Space, arrows, or one character |
+| `tabsteer scroll [up\|down\|top\|bottom]` | Scroll the page |
+| `tabsteer wait <text\|ref>` | Wait for something to appear (`--gone` to disappear) |
+| `tabsteer snap` | Screenshot the visible tab |
+| `tabsteer status` | Connection, pause state and shared tab count |
 
-Global options: `--tab <id>` selects a tab when several are shared, `--json` prints raw results.
+Add `--tab <id>` when several tabs are shared, and `--json` for raw output. `tabsteer --help` lists every option.
+
+## Limits
+
+- Clicks and key presses are simulated in the page, so a few sites ignore them.
+- Cross-origin iframes are not readable.
+- With Tab Steer in several Chrome profiles, the most recently opened profile is the one the agent controls.
+- Windows is not supported yet.
+- Some sites prohibit automated access in their terms. You are responsible for where you use Tab Steer; it has no features for evading bot detection.
 
 ## How it works
 
-```mermaid
-flowchart LR
-    A[AI agent] -- runs --> B[tabsteer CLI]
-    B -- "private Unix socket" --> C[Native messaging host]
-    C -- stdio --> D[Tab Steer extension]
-    D --> E[Shared tabs on allowed sites]
-```
-
-The browser launches the host, the CLI connects to it, and the extension decides what each command may touch. The reasoning behind this design is in [docs/decisions.md](docs/decisions.md).
-
-## Known limits
-
-- Clicks and key presses are simulated in the page. Sites that require trusted input events may ignore them.
-- Cross-origin iframes and closed shadow roots are not readable.
-- One browser profile at a time. The most recently started profile owns the connection; when it closes, another running profile takes over.
-- Screenshots need access to all sites, because Chrome allows tab screenshots only with that permission.
-- Links opened from a shared tab into a new tab join the Tab Steer group, so they are shared too. Drag such a tab out of the group to stop sharing it.
-- Windows is not supported yet.
-
-## Responsible use
-
-Some websites prohibit automated access in their terms and may restrict accounts that use it. You are responsible for the sites you point Tab Steer at. Prefer a site's official API where one exists. Tab Steer has no features for evading bot detection, and none will be added.
+The `tabsteer` command talks to a small companion program that Chrome starts, over a socket only your user can open. The companion relays each command to the extension, which checks the tab, the site and the pause switch before acting. The reasoning is in [docs/decisions.md](docs/decisions.md).
 
 ## Development
 
 ```sh
-git clone https://github.com/faysalmehmood/tabsteer.git
-cd tabsteer
-npm install
-./install.sh                      # links tabsteer from this checkout
+git clone https://github.com/faysalmehmood/tabsteer.git && cd tabsteer
+npm install && ./install.sh       # link tabsteer from this checkout
 npm test                          # host and CLI
-npx playwright install chromium
-npm run test:e2e                  # real Chromium with the extension loaded
+npx playwright install chromium && npm run test:e2e
 ```
 
-To run your own copy of the extension, remove the store version, open `chrome://extensions`, turn on **Developer mode**, choose **Load unpacked** and select the `extension` folder.
+To run your own build of the extension, remove the store version, then load the `extension` folder with **Load unpacked** in `chrome://extensions`. Report security issues privately, as described in [SECURITY.md](SECURITY.md).
 
-Security issues: please report them privately, as described in [SECURITY.md](SECURITY.md).
-
-## Credits
+## Credits and license
 
 The idea of a CLI-first controller for the user's real browser was shown publicly by [Ivan Leo](https://x.com/ivanleomk) ([GitHub](https://github.com/ivanleomk)), building on the approach of the OpenAI Codex Chrome extension. Tab Steer is an independent implementation, not affiliated with or endorsed by Google, OpenAI, Anthropic or anyone named here.
 
-## License
-
-[Apache-2.0](LICENSE)
+Licensed under [Apache-2.0](LICENSE).

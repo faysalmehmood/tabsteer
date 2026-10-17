@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Tab Steer</title>
+  <link rel="stylesheet" href="ui.css">
+  <style>
+    body { padding: 14px; }
+    header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+    header img { width: 22px; height: 22px; }
+    header h1 { font-size: 15px; margin: 0; flex: 1; }
+    h2 { font-size: 13px; margin: 0 0 8px; display: flex; align-items: center; gap: 8px; }
+    h2 span { flex: 1; }
+    ol, ul { list-style: none; margin: 0; padding: 0; }
+    .entry { padding: 7px 0; border-top: 1px solid var(--line); display: grid; grid-template-columns: auto 1fr; gap: 2px 8px; }
+    .entry:first-child { border-top: none; }
+    .entry time { color: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+    .entry .what { font-weight: 600; }
+    .entry .what.failed { color: var(--bad); }
+    .entry .detail { grid-column: 2; color: var(--muted); font-size: 12px; overflow-wrap: anywhere; }
+    .site-row { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-top: 1px solid var(--line); }
+    .site-row:first-child { border-top: none; }
+    .site-row span { flex: 1; overflow-wrap: anywhere; }
+    label.toggle { display: flex; gap: 8px; align-items: flex-start; margin-top: 10px; font-size: 12px; }
+    label.toggle input { margin-top: 2px; }
+  </style>
+</head>
+<body>
+  <header>
+    <img src="icons/icon48.png" alt="">
+    <h1>Tab Steer</h1>
+    <span class="pill" id="status">…</span>
+  </header>
+
+  <section>
+    <h2><span>Activity</span><button class="small" id="clear">Clear</button></h2>
+    <p class="note" id="activity-empty">Nothing yet. Commands your agent runs appear here.</p>
+    <ol id="activity" aria-live="polite"></ol>
+  </section>
+
+  <section>
+    <h2><span>Allowed sites</span></h2>
+    <p class="note" id="sites-empty">No sites allowed yet. Share a tab to allow its site.</p>
+    <ul id="sites"></ul>
+    <label class="toggle"><input type="checkbox" id="all-sites">
+      <span>Allow every site. Your agent can then act on any site in a shared tab, including ones it navigates to.</span></label>
+  </section>
+
+  <section id="off" hidden>
+    <p class="note"><strong>Tab Steer is turned off for websites.</strong> Open the toolbar icon and choose Turn on.</p>
+  </section>
+
+  <script src="panel.js"></script>
+</body>
+</html>

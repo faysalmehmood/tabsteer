@@ -20,8 +20,10 @@ Tab Steer gives a program control over pages in a browser where you are logged i
 **The agent is confined by state only you can change.** All of these live in the browser, not in files the agent could edit:
 
 - *Shared tabs.* Commands work only on tabs in the "Tab Steer" tab group.
-- *Allowed sites.* The extension ships with no site access. Each site is granted through Chrome's permission prompt, which requires a click in the extension's own window. Every command checks for that grant. The temporary access Chrome gives an extension when its toolbar icon is clicked does not count.
-- *Pause.* When paused, every command except `status` is refused.
+- *Allowed sites.* Tab Steer is turned on once through Chrome's own permission prompt, which lets the extension reach websites. The agent still reaches only sites on the user's allowed list, kept in the extension's storage. Sites are added by sharing a tab or clicking Allow in the popup, and removed in the popup or the Activity panel. Code in web pages cannot read or change that storage. The temporary access Chrome gives when the toolbar icon is clicked counts for nothing.
+- *Pause.* When paused, every command except `status` is refused, and the result of any command already running is discarded.
+
+**The user can see what happened.** The Activity panel lists every command, including refused ones. It keeps no typed text and no full addresses, and is cleared when the browser closes.
 
 **Sensitive values are withheld.** `read` and `type` never return the value of password fields, or of fields recognised as payment or one-time-code fields by their type, autocomplete hint, name or label. Recognition of the last two is a best effort. CSS selectors that test field values are refused, so values cannot be guessed one character at a time.
 
@@ -45,6 +47,7 @@ Tab Steer gives a program control over pages in a browser where you are logged i
 
 ## Design choices that follow from this
 
-- Policy is never read from disk, because the agent can write to disk.
-- The CLI has no command to share a tab the user already has open, allow a site, or resume from pause.
+- Policy is never read from disk, because the agent can write to disk. The allowed-site list lives in extension storage, which only the extension's own pages can change.
+- Being turned on gives the extension the technical ability to reach any site. Tab Steer's own check decides which ones the agent may use. A bug in that check would matter more than in 0.1, where Chrome enforced each site; the end-to-end tests cover it.
+- The CLI has no command to share a tab the user already has open, allow a site, turn Tab Steer on, or resume from pause.
 - Features that widen access (trusted input through the debugger API, script evaluation) will be opt-in, per site, and granted from the extension's own window.

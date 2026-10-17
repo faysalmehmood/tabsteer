@@ -65,21 +65,22 @@ test.before(async () => {
 test.after(() => server.close());
 
 // Launches Chromium with the extension and a private native host registration.
-async function launch({ grantSite, grantAll }) {
+// mode: 'on' (turned on: access to all sites), 'site' (one site granted the 0.1 way), 'off'.
+async function launch({ mode }) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ts-'));
   const home = path.join(dir, 'h');
   const profile = path.join(dir, 'profile');
   let extension = path.join(ROOT, 'extension');
   fs.mkdirSync(home, { mode: 0o700 });
 
-  if (grantSite || grantAll) {
+  if (mode !== 'off') {
     // The permission prompt can't be clicked from a test, so this variant is
-    // installed with access to the fixture site already granted.
+    // installed with the permission already granted.
     extension = path.join(dir, 'extension');
     fs.cpSync(path.join(ROOT, 'extension'), extension, { recursive: true });
     const file = path.join(extension, 'manifest.json');
     const manifest = JSON.parse(fs.readFileSync(file, 'utf8'));
-    manifest.host_permissions = [grantAll ? '<all_urls>' : 'http://127.0.0.1/*'];
+    manifest.host_permissions = [mode === 'on' ? '<all_urls>' : 'http://127.0.0.1/*'];
     fs.writeFileSync(file, JSON.stringify(manifest));
   }
 
@@ -122,7 +123,7 @@ async function launch({ grantSite, grantAll }) {
 }
 
 test('shared tabs with site access', async (t) => {
-  const { context, worker, run, ok, refOf, dir } = await launch({ grantSite: true });
+  const { context, worker, run, ok, refOf, dir } = await launch({ mode: 'on' });
   t.after(() => context.close());
 
   await t.test('starts connected with nothing shared', async () => {
@@ -136,8 +137,16 @@ test('shared tabs with site access', async (t) => {
   await t.test('open creates a tab inside the Tab Steer group', async () => {
     const opened = JSON.parse(await ok('open', `${base}/form`, '--json'));
     tabId = opened.id;
-    assert.strictEqual(opened.allowed, true);
-    assert.strictEqual(opened.url, `${base}/form`);
+    // Turned on, but this site has not been allowed yet.
+    assert.strictEqual(opened.allowed, false);
+    assert.strictEqual(opened.url, null);
+    const refused = await run('read');
+    assert.strictEqual(refused.code, 1);
+    assert.match(refused.stderr, /site the user has not allowed/);
+    await worker.evaluate((origin) => allowSite(origin), base);
+    const [listed] = JSON.parse(await ok('tabs', '--json'));
+    assert.strictEqual(listed.allowed, true);
+    assert.strictEqual(listed.url, `${base}/form`);
     const title = await worker.evaluate(async (id) => {
       const tab = await chrome.tabs.get(id);
       return (await chrome.tabGroups.get(tab.groupId)).title;
@@ -225,10 +234,53 @@ test('shared tabs with site access', async (t) => {
     assert.match(r.stderr, /Timed out after 300 ms/);
   });
 
-  await t.test('snap explains that screenshots need access to all sites', async () => {
-    const r = await run('snap', '--out', path.join(dir, 'shot.png'));
-    assert.strictEqual(r.code, 1);
-    assert.match(r.stderr, /Screenshots need access to all sites/);
+  await t.test('snap saves a PNG of an allowed site', async () => {
+    const file = path.join(dir, 'shot.png');
+    await ok('snap', '--out', file);
+    assert.strictEqual(fs.readFileSync(file).subarray(1, 4).toString(), 'PNG');
+  });
+
+  await t.test('the activity log records commands without typed text', async () => {
+    await ok('type', 'very-secret-words', '--into', 'css=input[name=who]');
+    const activity = await worker.evaluate(async () => (await chrome.storage.session.get('activity')).activity);
+    const actions = activity.map((a) => a.action);
+    for (const action of ['open', 'read', 'click', 'type', 'snap']) assert.ok(actions.includes(action), action);
+    const typed = activity.filter((a) => a.action === 'type').at(-1);
+    assert.strictEqual(typed.detail, '17 characters into css=input[name=who]');
+    assert.doesNotMatch(JSON.stringify(activity), /very-secret-words/);
+    assert.ok(activity.some((a) => !a.ok && /not allowed/.test(a.error)), 'refusals are logged');
+  });
+
+  await t.test('code in a page cannot change the allowed sites', async () => {
+    const outcome = await worker.evaluate(async (id) => {
+      const [r] = await chrome.scripting.executeScript({
+        target: { tabId: id },
+        func: async () => {
+          try {
+            await chrome.storage.local.set({ allowAllSites: true, allowedSites: ['https://evil.example'] });
+            return 'written';
+          } catch (e) {
+            return 'blocked';
+          }
+        },
+      });
+      return r.result;
+    }, tabId);
+    const s = await worker.evaluate(() => chrome.storage.local.get(['allowAllSites', 'allowedSites']));
+    assert.strictEqual(outcome, 'blocked');
+    assert.ok(!s.allowAllSites);
+    assert.ok(!s.allowedSites.includes('https://evil.example'));
+  });
+
+  await t.test('removing a site cuts access, and "allow every site" restores it', async () => {
+    await worker.evaluate((origin) => revokeSite(origin), base);
+    const r = await run('read');
+    assert.match(r.stderr, /site the user has not allowed/);
+    await worker.evaluate(() => chrome.storage.local.set({ allowAllSites: true }));
+    await ok('read');
+    await worker.evaluate(() => chrome.storage.local.set({ allowAllSites: false }));
+    await worker.evaluate((origin) => allowSite(origin), base);
+    await ok('read');
   });
 
   await t.test('refs go stale after navigation', async () => {
@@ -300,8 +352,8 @@ test('shared tabs with site access', async (t) => {
   });
 });
 
-test('without site permission the agent can open a page but not read or act on it', async (t) => {
-  const { context, run, ok } = await launch({ grantSite: false });
+test('when Tab Steer is not turned on, the agent can open a page but not read or act on it', async (t) => {
+  const { context, run, ok } = await launch({ mode: 'off' });
   t.after(() => context.close());
 
   const opened = JSON.parse(await ok('open', `${base}/form`, '--json'));
@@ -310,15 +362,18 @@ test('without site permission the agent can open a page but not read or act on i
   for (const command of [['read'], ['click', 'Add'], ['type', 'x'], ['snap']]) {
     const r = await run(...command);
     assert.strictEqual(r.code, 1, command[0]);
-    assert.match(r.stderr, /not allowed to access/, command[0]);
+    assert.match(r.stderr, /not turned on/, command[0]);
   }
 });
 
-test('with access to all sites, snap saves a PNG of the shared tab', async (t) => {
-  const { context, ok, dir } = await launch({ grantAll: true });
+test('a site granted the 0.1 way keeps working, and screenshots ask to turn on', async (t) => {
+  const { context, run, ok } = await launch({ mode: 'site' });
   t.after(() => context.close());
-  await ok('open', `${base}/next`);
-  const file = path.join(dir, 'shot.png');
-  await ok('snap', '--out', file);
-  assert.strictEqual(fs.readFileSync(file).subarray(1, 4).toString(), 'PNG');
+  const opened = JSON.parse(await ok('open', `${base}/next`, '--json'));
+  assert.strictEqual(opened.allowed, true);
+  assert.match(await ok('read'), /Second page/);
+  const r = await run('snap');
+  assert.strictEqual(r.code, 1);
+  assert.match(r.stderr, /Screenshots need Tab Steer to be turned on/);
+  assert.match(await ok('status'), /Turned on: no/);
 });
