@@ -2,13 +2,13 @@
 // ref table live for the lifetime of the document, so refs survive between
 // commands and die on navigation.
 (() => {
-  if (globalThis.__tabsteer) return;
+  const KEY = '__tabsteer_' + chrome.runtime.getManifest().version.replace(/\W/g, '_');
+  if (globalThis[KEY]) return;
 
   // ---------------------------------------------------------------- refs
-  // A ref looks like @kq12: a per-document nonce plus a counter, so a ref
-  // taken on a previous page can never resolve to an element on this one.
-  const letter = () => String.fromCharCode(97 + Math.floor(Math.random() * 26));
-  const NONCE = letter() + letter();
+  // A ref looks like @kqzbwr12: a random per-document prefix plus a counter, so
+  // a ref taken on a previous page cannot resolve to an element on this one.
+  const NONCE = Array.from(crypto.getRandomValues(new Uint8Array(6)), (b) => String.fromCharCode(97 + (b % 26))).join('');
   const byId = new Map();
   const idOf = new WeakMap();
   let nextId = 1;
@@ -24,7 +24,7 @@
   }
 
   function fromRef(ref) {
-    const m = /^@([a-z]{2})(\d+)$/.exec(ref);
+    const m = /^@([a-z]{6})(\d+)$/.exec(ref);
     if (!m) throw new Error(`"${ref}" is not a valid ref.`);
     const el = m[1] === NONCE ? byId.get(Number(m[2]))?.deref() : null;
     if (!el || !el.isConnected) {
@@ -57,9 +57,13 @@
     return r.width > 0 && r.height > 0;
   }
 
+  const SENSITIVE_NAME = /(^|[^a-z])(cc|cvv|cvc|csc|card|pan|otp|totp|mfa|2fa|pin|ssn|password|passcode|secret)([^a-z]|$)|cardnumber|securitycode|verificationcode/i;
   function isSensitive(el) {
     const ac = (el.getAttribute('autocomplete') || '').toLowerCase();
-    return (el.type || '').toLowerCase() === 'password' || /password|cc-|one-time-code/.test(ac);
+    if ((el.type || '').toLowerCase() === 'password') return true;
+    if (/password|cc-|one-time-code/.test(ac)) return true;
+    const names = [el.name, el.id, el.getAttribute('aria-label'), el.getAttribute('data-testid')].filter(Boolean).join(' ');
+    return SENSITIVE_NAME.test(names.replace(/([a-z])([A-Z])/g, '$1 $2'));
   }
 
   function shownValue(el) {
@@ -137,7 +141,8 @@
         return `[textarea "${label}" value="${shownValue(el)}"${off} ${ref}]`;
       case 'select': {
         const chosen = el.selectedOptions && el.selectedOptions[0];
-        return `[select "${label}" value="${clean(chosen ? chosen.text : '')}"${off} ${ref}]`;
+        const shown = isSensitive(el) ? (chosen && el.value ? '[hidden]' : '') : clean(chosen ? chosen.text : '');
+        return `[select "${label}" value="${shown}"${off} ${ref}]`;
       }
       case 'checkbox':
       case 'radio':
@@ -203,9 +208,18 @@
     throw new Error(`"${text}" matches ${hits.length} elements. Use one of these refs instead:\n${list.join('\n')}${more}`);
   }
 
+  // A selector like input[value^="a"] would let an agent guess a field's value
+  // one character at a time, so selectors may not look at values.
+  function checkSelector(sel) {
+    if (/\[\s*value\b|:placeholder-shown|:valid|:invalid|:in-range|:out-of-range/i.test(sel)) {
+      throw new Error('CSS selectors may not test field values. Use a ref from "tabsteer read" instead.');
+    }
+  }
+
   function resolve(target) {
     if (target.startsWith('@')) return fromRef(target);
     if (target.startsWith('css=')) {
+      checkSelector(target.slice(4));
       let found;
       try {
         found = deepAll(target.slice(4));
@@ -369,7 +383,7 @@
       el.value = option.value;
       el.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
       el.dispatchEvent(new Event('change', { bubbles: true }));
-      return { ref: refFor(el), value: clean(option.text) };
+      return { ref: refFor(el), value: isSensitive(el) ? '[hidden]' : clean(option.text) };
     }
 
     if (el.isContentEditable) {
@@ -456,6 +470,7 @@
       return clean(document.body.innerText).toLowerCase().includes(clean(target).toLowerCase());
     };
     if (target.startsWith('css=')) {
+      checkSelector(target.slice(4));
       try {
         document.querySelector(target.slice(4));
       } catch (e) {
@@ -477,7 +492,7 @@
 
   const COMMANDS = { read, click, type, press, scroll, wait };
 
-  globalThis.__tabsteer = {
+  globalThis[KEY] = {
     async run(command, args) {
       try {
         const fn = COMMANDS[command];

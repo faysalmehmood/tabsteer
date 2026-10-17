@@ -19,7 +19,7 @@ Tabs
   close                       Close a shared tab
 
 Page
-  read [--offset N] [--limit N]   Page as Markdown; controls carry refs like @kq12
+  read [--offset N] [--limit N]   Page as Markdown; controls carry refs like @kqzbwr12
   click <ref|text|css=sel>        Click one element
   type <text> [--into <ref>]      Replace the content of a field (or pick a <select> option)
   press <key> [--into <ref>]      Enter, Tab, Escape, Space, arrows, or a single character

@@ -16,8 +16,8 @@ description: Read and control web pages in the user's real, logged-in Chrome thr
 ## Workflow
 
 1. `tabsteer tabs` — see what is shared. Or `tabsteer open <url>` to open a new shared tab.
-2. `tabsteer read` — the page as Markdown. Every control has a ref such as `@kq12`.
-3. Act on refs: `tabsteer click @kq12`, `tabsteer type "hello" --into @kq7`, `tabsteer press Enter`.
+2. `tabsteer read` — the page as Markdown. Every control has a ref such as `@kqzbwr12`.
+3. Act on refs: `tabsteer click @kqzbwr12`, `tabsteer type "hello" --into @kqzbwr7`, `tabsteer press Enter`.
 4. `tabsteer wait "some text"` after anything that loads, then `read` again. Refs die when the page changes.
 
 Prefer `read` to `snap`; use `snap` only when layout or images matter.
@@ -38,12 +38,12 @@ Prefer `read` to `snap`; use `snap` only when layout or images matter.
 | `tabsteer press <key> [--into <ref>]` | Enter, Tab, Escape, Space, arrow keys, or one character |
 | `tabsteer scroll [up\|down\|top\|bottom] [px]` | Scroll the page |
 | `tabsteer wait <text\|ref\|css=sel> [--gone] [--timeout ms]` | Wait for something to appear or disappear (max 25 s) |
-| `tabsteer snap [--out file.png]` | Screenshot the visible part of the tab |
+| `tabsteer snap [--out file.png]` | Screenshot the visible part of the tab (only when the user allowed all sites) |
 
 Add `--tab <id>` when more than one tab is shared, and `--json` for raw output.
 
 ## Limits
 
-- Password and payment field values are never shown.
+- Values of password, payment and one-time-code fields are hidden, and `css=` selectors may not test field values.
 - Key presses are simulated: Enter submits forms and activates buttons, but other keys may not trigger a site's default behaviour.
 - Content inside cross-origin iframes is not readable.

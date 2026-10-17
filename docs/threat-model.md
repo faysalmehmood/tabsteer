@@ -20,10 +20,10 @@ Tab Steer gives a program control over pages in a browser where you are logged i
 **The agent is confined by state only you can change.** All of these live in the browser, not in files the agent could edit:
 
 - *Shared tabs.* Commands work only on tabs in the "Tab Steer" tab group.
-- *Allowed sites.* The extension ships with no site access. Each site is granted through Chrome's permission prompt, which requires a click in the extension's own window. Without the grant the extension cannot read or script the page, and cannot even see its URL.
+- *Allowed sites.* The extension ships with no site access. Each site is granted through Chrome's permission prompt, which requires a click in the extension's own window. Every command checks for that grant. The temporary access Chrome gives an extension when its toolbar icon is clicked does not count.
 - *Pause.* When paused, every command except `status` is refused.
 
-**Sensitive values are withheld.** `read` and `type` never return the value of password, payment or one-time-code fields.
+**Sensitive values are withheld.** `read` and `type` never return the value of password fields, or of fields recognised as payment or one-time-code fields by their type, autocomplete hint, name or label. Recognition of the last two is a best effort. CSS selectors that test field values are refused, so values cannot be guessed one character at a time.
 
 **No arbitrary code execution.** There is no `eval` command, and navigation is limited to `http` and `https` URLs. Everything the extension runs in a page is fixed code shipped in the extension.
 
@@ -37,7 +37,9 @@ Tab Steer gives a program control over pages in a browser where you are logged i
 
 **Opening pages.** The agent may open or navigate a shared tab to any `http(s)` URL, including on sites it is not allowed to read. A request made that way carries your cookies, as it would if you clicked a link.
 
-**Screenshots.** `snap` captures whatever the shared tab shows, including anything sensitive visible on it.
+**Screenshots.** `snap` captures whatever the shared tab shows, including anything sensitive visible on it. It refuses if another tab becomes visible during the capture. Chrome allows it only when all sites are allowed.
+
+**Tabs opened from a shared tab.** Chrome places a tab opened from a link in a shared tab into the same group, so it is shared too.
 
 **Other extensions and malware.** Software already running as you is outside this model.
 

@@ -1,7 +1,7 @@
 # Chrome Web Store listing
 
 Copy these into the Developer Dashboard. Files to upload are in this folder,
-and the zip comes from `scripts/package-extension.sh` (current: `dist/tabsteer-extension-0.1.1.zip`).
+and the zip comes from `scripts/package-extension.sh` (current: `dist/tabsteer-extension-0.1.2.zip`).
 
 ## Store listing tab
 
@@ -73,7 +73,7 @@ Tab Steer lets a command-line tool on the user's own computer read and control t
 | `nativeMessaging` | The extension's only function is to receive commands from the companion command-line tool installed on the same computer, and return results to it. Native messaging is the channel between the two. No remote server is involved. |
 | `scripting` | Used to run the extension's own packaged script in a shared tab to read page content and perform the click, type, scroll and wait actions the user's tool requests. No remotely hosted code is executed. |
 | `tabGroups` | Sharing is represented by a tab group named "Tab Steer". The extension creates that group, adds tabs the user shares to it, and checks group membership before every action so that tabs outside it cannot be touched. |
-| `activeTab` | When the user clicks the toolbar icon, the popup needs the current tab's address to show which site it is and to offer "Share this tab" and "Allow on this site" for that site. |
+| `activeTab` | When the user clicks the toolbar icon, the popup needs the current tab's address to show which site it is and to offer "Share this tab" and "Allow on this site" for that site. It never gives the command-line tool access: every command checks for a site permission the user granted. |
 | `storage` | Stores one setting locally: whether the user has paused Tab Steer. |
 | `alarms` | Retries the connection to the companion tool once a minute, so the extension connects after the user installs the companion without needing a browser restart. |
 | Host permissions (optional, `<all_urls>`) | Declared as optional and never granted at install. The user grants access one site at a time (or all sites, if they choose) from the popup. Access is needed to read and act on pages of the sites the user has chosen to let their agent use; the set of sites cannot be known in advance. |

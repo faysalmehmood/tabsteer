@@ -1,6 +1,6 @@
 {
   "name": "tabsteer",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Hand your coding agent a tab, not your browser. A CLI that controls only the Chrome tabs and sites you share.",
   "license": "Apache-2.0",
   "author": "Faysal Mehmood",
@@ -32,7 +32,8 @@
   "scripts": {
     "test": "node --test test/host.test.js",
     "test:e2e": "node --test --test-concurrency=1 test/e2e.test.js",
-    "icons": "python3 scripts/make-icons.py"
+    "icons": "python3 scripts/make-icons.py",
+    "images": "node scripts/store-images.js"
   },
   "keywords": [
     "browser",

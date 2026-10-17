@@ -29,6 +29,8 @@ const FORM_PAGE = `<!doctype html><title>Fixture</title>
 <form id="f"><label>Name <input name="who"></label>
 <label>Password <input type="password" value="s3cret"></label>
 <label>Colour <select name="c"><option>Red</option><option>Green</option></select></label>
+<label>Security code <input name="cvv" value="987"></label>
+<label>Expiry month <select autocomplete="cc-exp-month"><option>01</option><option selected>07</option></select></label>
 <button>Greet</button></form>
 <p id="hello"></p>
 <div id="shadow-host"></div>
@@ -63,21 +65,21 @@ test.before(async () => {
 test.after(() => server.close());
 
 // Launches Chromium with the extension and a private native host registration.
-async function launch({ grantAllSites }) {
+async function launch({ grantSite, grantAll }) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ts-'));
   const home = path.join(dir, 'h');
   const profile = path.join(dir, 'profile');
   let extension = path.join(ROOT, 'extension');
   fs.mkdirSync(home, { mode: 0o700 });
 
-  if (grantAllSites) {
+  if (grantSite || grantAll) {
     // The permission prompt can't be clicked from a test, so this variant is
-    // installed with site access already granted.
+    // installed with access to the fixture site already granted.
     extension = path.join(dir, 'extension');
     fs.cpSync(path.join(ROOT, 'extension'), extension, { recursive: true });
     const file = path.join(extension, 'manifest.json');
     const manifest = JSON.parse(fs.readFileSync(file, 'utf8'));
-    manifest.host_permissions = ['<all_urls>'];
+    manifest.host_permissions = [grantAll ? '<all_urls>' : 'http://127.0.0.1/*'];
     fs.writeFileSync(file, JSON.stringify(manifest));
   }
 
@@ -120,7 +122,7 @@ async function launch({ grantAllSites }) {
 }
 
 test('shared tabs with site access', async (t) => {
-  const { context, worker, run, ok, refOf, dir } = await launch({ grantAllSites: true });
+  const { context, worker, run, ok, refOf, dir } = await launch({ grantSite: true });
   t.after(() => context.close());
 
   await t.test('starts connected with nothing shared', async () => {
@@ -162,9 +164,12 @@ test('shared tabs with site access', async (t) => {
     assert.match(page1, /^# Fixture\nURL: /);
     assert.match(page1, /^# Fixture page$/m);
     assert.match(page1, /^Some inline text\.$/m);
-    assert.match(page1, /\[Next page\]\(\/next\) @[a-z]{2}\d+/);
+    assert.match(page1, /\[Next page\]\(\/next\) @[a-z]{6}\d+/);
     assert.match(page1, /\[input:password "Password" value="\[hidden\]" @/);
     assert.doesNotMatch(page1, /s3cret/);
+    assert.match(page1, /\[input:text "Security code" value="\[hidden\]" @/);
+    assert.doesNotMatch(page1, /987/);
+    assert.match(page1, /\[select "Expiry month" value="\[hidden\]" @/);
     assert.match(page1, /\[button "Shadow button" @/);
   });
 
@@ -177,7 +182,7 @@ test('shared tabs with site access', async (t) => {
     const r = await run('click', 'Delete');
     assert.strictEqual(r.code, 1);
     assert.match(r.stderr, /"Delete" matches 2 elements/);
-    const second = [...r.stderr.matchAll(/\[button "Delete" (@[a-z]{2}\d+)\]/g)][1][1];
+    const second = [...r.stderr.matchAll(/\[button "Delete" (@[a-z]{6}\d+)\]/g)][1][1];
     await ok('click', second);
     assert.match(await ok('read'), /Deleted B/);
   });
@@ -188,14 +193,29 @@ test('shared tabs with site access', async (t) => {
   });
 
   await t.test('type, select and Enter submit a form', async () => {
-    const name = refOf(page1, /\[input:text "Name" value="" (@[a-z]{2}\d+)\]/);
-    const colour = refOf(page1, /\[select "Colour" value="Red" (@[a-z]{2}\d+)\]/);
+    const name = refOf(page1, /\[input:text "Name" value="" (@[a-z]{6}\d+)\]/);
+    const colour = refOf(page1, /\[select "Colour" value="Red" (@[a-z]{6}\d+)\]/);
     await ok('type', 'Green', '--into', colour);
     await ok('type', 'Ada', '--into', name);
     assert.match(await ok('press', 'Enter'), /submitted form/);
     await ok('wait', 'Hello Ada in Green');
     const bad = await run('type', 'x', '--into', 'css=#add');
     assert.match(bad.stderr, /not a text field/);
+  });
+
+  await t.test('selectors that test field values are refused', async () => {
+    for (const sel of ['css=input[value^="s"]', 'css=input[type=password][value="s3cret"]', 'css=input:placeholder-shown']) {
+      for (const command of ['click', 'wait']) {
+        const r = await run(command, sel);
+        assert.strictEqual(r.code, 1, `${command} ${sel}`);
+        assert.match(r.stderr, /may not test field values/);
+      }
+    }
+  });
+
+  await t.test('status names the connected build', async () => {
+    const status = JSON.parse(await ok('status', '--json'));
+    assert.match(status.extensionId, /^[a-p]{32}$/);
   });
 
   await t.test('wait sees late content and times out on missing content', async () => {
@@ -205,14 +225,14 @@ test('shared tabs with site access', async (t) => {
     assert.match(r.stderr, /Timed out after 300 ms/);
   });
 
-  await t.test('snap saves a PNG', async () => {
-    const file = path.join(dir, 'shot.png');
-    await ok('snap', '--out', file);
-    assert.strictEqual(fs.readFileSync(file).subarray(1, 4).toString(), 'PNG');
+  await t.test('snap explains that screenshots need access to all sites', async () => {
+    const r = await run('snap', '--out', path.join(dir, 'shot.png'));
+    assert.strictEqual(r.code, 1);
+    assert.match(r.stderr, /Screenshots need access to all sites/);
   });
 
   await t.test('refs go stale after navigation', async () => {
-    const add = refOf(page1, /\[button "Add" (@[a-z]{2}\d+)\]/);
+    const add = refOf(page1, /\[button "Add" (@[a-z]{6}\d+)\]/);
     await ok('click', 'Next page');
     await ok('wait', 'Second page');
     await ok('read');
@@ -239,6 +259,16 @@ test('shared tabs with site access', async (t) => {
       assert.strictEqual(r.code, 1, url);
       assert.match(r.stderr, /Only http and https/, url);
     }
+  });
+
+  await t.test('pausing discards the result of a command already running', async () => {
+    const pending = run('wait', 'never appears', '--timeout', '3000');
+    await new Promise((r) => setTimeout(r, 500));
+    await worker.evaluate(() => chrome.storage.local.set({ paused: true }));
+    const r = await pending;
+    assert.strictEqual(r.code, 1);
+    assert.match(r.stderr, /paused by the user/);
+    await worker.evaluate(() => chrome.storage.local.set({ paused: false }));
   });
 
   await t.test('pause blocks every action until resumed', async () => {
@@ -271,7 +301,7 @@ test('shared tabs with site access', async (t) => {
 });
 
 test('without site permission the agent can open a page but not read or act on it', async (t) => {
-  const { context, run, ok } = await launch({ grantAllSites: false });
+  const { context, run, ok } = await launch({ grantSite: false });
   t.after(() => context.close());
 
   const opened = JSON.parse(await ok('open', `${base}/form`, '--json'));
@@ -282,4 +312,13 @@ test('without site permission the agent can open a page but not read or act on i
     assert.strictEqual(r.code, 1, command[0]);
     assert.match(r.stderr, /not allowed to access/, command[0]);
   }
+});
+
+test('with access to all sites, snap saves a PNG of the shared tab', async (t) => {
+  const { context, ok, dir } = await launch({ grantAll: true });
+  t.after(() => context.close());
+  await ok('open', `${base}/next`);
+  const file = path.join(dir, 'shot.png');
+  await ok('snap', '--out', file);
+  assert.strictEqual(fs.readFileSync(file).subarray(1, 4).toString(), 'PNG');
 });
