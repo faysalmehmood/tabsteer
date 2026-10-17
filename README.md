@@ -9,9 +9,10 @@
 [![Tests](https://github.com/faysalmehmood/tabsteer/actions/workflows/test.yml/badge.svg)](https://github.com/faysalmehmood/tabsteer/actions/workflows/test.yml)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 ![Platforms](https://img.shields.io/badge/platform-macOS%20%7C%20Linux-lightgrey.svg)
-![Version](https://img.shields.io/badge/version-0.1.1-informational.svg)
+[![Chrome Web Store](https://img.shields.io/chrome-web-store/v/mkpmilnglglhiaeojeeioafmbjjghmed?label=chrome%20web%20store)](https://chromewebstore.google.com/detail/tab-steer/mkpmilnglglhiaeojeeioafmbjjghmed)
+[![npm](https://img.shields.io/npm/v/tabsteer.svg)](https://www.npmjs.com/package/tabsteer)
 
-[Website](https://tabsteer.conceptlix.com) · [Install](#install) · [Commands](#commands) · [Safety model](#safety-model) · [Threat model](docs/threat-model.md)
+[Website](https://tabsteer.conceptlix.com) · [Chrome Web Store](https://chromewebstore.google.com/detail/tab-steer/mkpmilnglglhiaeojeeioafmbjjghmed) · [Install](#install) · [Commands](#commands) · [Safety model](#safety-model) · [Threat model](docs/threat-model.md)
 
 </div>
 
@@ -23,14 +24,14 @@ Opened tab 1853312301
 
 $ tabsteer read
 # Hacker News
-[new](newest) @kq2 | [past](front) @kq3 | [comments](newcomments) @kq4 ...
+[new](newest) @kqzbwr2 | [past](front) @kqzbwr3 | [comments](newcomments) @kqzbwr4 ...
 
-$ tabsteer click @kq2
-Clicked link "new" @kq2
+$ tabsteer click @kqzbwr2
+Clicked link "new" @kqzbwr2
 ```
 
 > [!NOTE]
-> Version 0.1 is an early release for macOS and Linux. It is not yet on the Chrome Web Store, so the extension is loaded unpacked.
+> Version 0.1 is an early release. The command-line tool runs on macOS and Linux.
 
 ## Why Tab Steer
 
@@ -52,7 +53,7 @@ An agent in your logged-in browser acts as you, so every limit is held in the br
 - **Allowed sites only.** The extension installs with access to no sites. You grant each site from the toolbar icon.
 - **One-click pause.** Every command is refused until you resume.
 - **No network surface.** The CLI reaches the browser over a Unix socket only your user can open. Nothing listens on a port.
-- **Secrets withheld.** Password, payment and one-time-code values are never returned.
+- **Secrets withheld.** Values of password fields, and of fields recognised as payment or one-time-code fields, are never returned.
 - **No arbitrary code.** There is no `eval` command.
 - **No telemetry.** Nothing is collected or sent anywhere. See the [privacy policy](docs/PRIVACY.md).
 
@@ -64,25 +65,14 @@ Read the [threat model](docs/threat-model.md) before using Tab Steer on accounts
 
 Requires Node.js 18 or newer and a Chromium-family browser (Chrome, Brave, Edge, Vivaldi, Arc, Chromium).
 
-**1. Install the command-line tool**
+**1. Add the extension** from the [Chrome Web Store](https://chromewebstore.google.com/detail/tab-steer/mkpmilnglglhiaeojeeioafmbjjghmed).
+
+**2. Install the command-line tool**
 
 ```sh
 npm install -g tabsteer
 tabsteer install
 ```
-
-Or from source:
-
-```sh
-git clone https://github.com/faysalmehmood/tabsteer.git
-cd tabsteer
-./install.sh
-```
-
-**2. Load the extension**
-
-1. Open `chrome://extensions` and turn on **Developer mode**.
-2. Click **Load unpacked** and select the `extension` folder. `tabsteer install` prints its full path.
 
 **3. Check the setup**
 
@@ -114,13 +104,13 @@ Every line should show a tick. To remove everything outside the browser, run `ta
 | `tabsteer navigate <url>` | Load a URL in a shared tab |
 | `tabsteer back` | Go back one page |
 | `tabsteer close` | Close a shared tab |
-| `tabsteer read [--offset N] [--limit N]` | Page as Markdown. Each control carries a ref such as `@kq12` |
+| `tabsteer read [--offset N] [--limit N]` | Page as Markdown. Each control carries a ref such as `@kqzbwr12` |
 | `tabsteer click <ref\|text\|css=sel>` | Click one element. Ambiguous text returns candidates and clicks nothing |
 | `tabsteer type <text> [--into <ref>]` | Replace a field's content, or choose a `<select>` option |
 | `tabsteer press <key> [--into <ref>]` | Enter, Tab, Escape, Space, arrow keys, or one character |
 | `tabsteer scroll [up\|down\|top\|bottom] [px]` | Scroll the page |
 | `tabsteer wait <text\|ref\|css=sel> [--gone] [--timeout ms]` | Wait for something to appear or disappear |
-| `tabsteer snap [--out file.png]` | Screenshot the visible part of the tab |
+| `tabsteer snap [--out file.png]` | Screenshot the visible part of the tab. Needs "Allow on all sites", a Chrome rule |
 
 Global options: `--tab <id>` selects a tab when several are shared, `--json` prints raw results.
 
@@ -140,7 +130,9 @@ The browser launches the host, the CLI connects to it, and the extension decides
 
 - Clicks and key presses are simulated in the page. Sites that require trusted input events may ignore them.
 - Cross-origin iframes and closed shadow roots are not readable.
-- One browser profile at a time. The most recently started profile owns the connection.
+- One browser profile at a time. The most recently started profile owns the connection; when it closes, another running profile takes over.
+- Screenshots need access to all sites, because Chrome allows tab screenshots only with that permission.
+- Links opened from a shared tab into a new tab join the Tab Steer group, so they are shared too. Drag such a tab out of the group to stop sharing it.
 - Windows is not supported yet.
 
 ## Responsible use
@@ -150,11 +142,16 @@ Some websites prohibit automated access in their terms and may restrict accounts
 ## Development
 
 ```sh
+git clone https://github.com/faysalmehmood/tabsteer.git
+cd tabsteer
 npm install
+./install.sh                      # links tabsteer from this checkout
 npm test                          # host and CLI
 npx playwright install chromium
 npm run test:e2e                  # real Chromium with the extension loaded
 ```
+
+To run your own copy of the extension, remove the store version, open `chrome://extensions`, turn on **Developer mode**, choose **Load unpacked** and select the `extension` folder.
 
 Security issues: please report them privately, as described in [SECURITY.md](SECURITY.md).
 

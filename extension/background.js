@@ -7,6 +7,8 @@ const GROUP_TITLE = 'Tab Steer';
 const VERSION = chrome.runtime.getManifest().version;
 const LOAD_TIMEOUT_MS = 15000;
 const MAX_WAIT_MS = 25000;
+// page.js registers itself under a per-version name, so an update never talks to old page code.
+const PAGE_KEY = '__tabsteer_' + VERSION.replace(/\W/g, '_');
 
 let port = null;
 let hostReady = false;
@@ -48,7 +50,10 @@ function connect() {
   p.postMessage({ type: 'hello', version: VERSION });
 }
 
-chrome.runtime.onStartup.addListener(connect);
+chrome.runtime.onStartup.addListener(() => {
+  chrome.alarms.create('reconnect', { periodInMinutes: 1 });
+  connect();
+});
 chrome.runtime.onInstalled.addListener((details) => {
   chrome.alarms.create('reconnect', { periodInMinutes: 1 });
   connect();
@@ -107,14 +112,25 @@ async function resolveTab(tabId) {
 }
 
 // Without host permission for a tab's site, Chrome hides its URL from us.
-function requireAccess(tab) {
-  if (!tab.url) {
-    throw new Error(`Tab ${tab.id} is on a site Tab Steer is not allowed to access. Ask the user to click the Tab Steer toolbar icon on that tab and choose "Allow on this site".`);
-  }
-  if (!/^https?:/i.test(tab.url)) throw new Error('Tab Steer can only act on http and https pages.');
+const notAllowed = (tab) =>
+  new Error(`Tab ${tab.id} is on a site Tab Steer is not allowed to access. Ask the user to click the Tab Steer toolbar icon on that tab and choose "Allow on this site".`);
+
+// Only a site permission the user granted counts. Opening the popup also gives
+// the extension temporary activeTab access to that tab, which must not.
+async function hasSiteAccess(url) {
+  if (!url || !/^https?:/i.test(url)) return false;
+  return chrome.permissions.contains({ origins: [`${new URL(url).origin}/*`] });
 }
 
-const describeTab = (t) => ({ id: t.id, title: t.title || null, url: t.url || null, active: t.active, allowed: !!t.url });
+async function requireAccess(tab) {
+  if (tab.url && !/^https?:/i.test(tab.url)) throw new Error('Tab Steer can only act on http and https pages.');
+  if (!(await hasSiteAccess(tab.url))) throw notAllowed(tab);
+}
+
+async function describeTab(t) {
+  if (!(await hasSiteAccess(t.url))) return { id: t.id, title: null, url: null, active: t.active, allowed: false };
+  return { id: t.id, title: t.title || null, url: t.url, active: t.active, allowed: true };
+}
 
 function normalizeUrl(input) {
   if (typeof input !== 'string' || !input.trim()) throw new Error('A URL is required.');
@@ -158,14 +174,14 @@ function loadAndWait(tabId, start) {
 }
 
 async function runInPage(tab, command, args) {
-  requireAccess(tab);
+  await requireAccess(tab);
   let injection;
   try {
     await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ['page.js'] });
     [injection] = await chrome.scripting.executeScript({
       target: { tabId: tab.id },
-      func: (c, a) => globalThis.__tabsteer.run(c, a),
-      args: [command, args],
+      func: (key, c, a) => globalThis[key].run(c, a),
+      args: [PAGE_KEY, command, args],
     });
   } catch (e) {
     throw new Error(`Could not reach the page: ${e.message}`);
@@ -179,7 +195,7 @@ async function runInPage(tab, command, args) {
 // --------------------------------------------------------------- commands
 const commands = {
   async tabs() {
-    return (await sharedTabs()).map(describeTab);
+    return Promise.all((await sharedTabs()).map(describeTab));
   },
 
   async open({ url, background }) {
@@ -187,7 +203,12 @@ const commands = {
     const win = await chrome.windows.getLastFocused({ windowTypes: ['normal'] });
     // Start blank so the tab is in the shared group before the site loads.
     const tab = await chrome.tabs.create({ url: 'about:blank', active: !background, windowId: win.id });
-    await shareTab(tab.id);
+    try {
+      await shareTab(tab.id);
+    } catch (e) {
+      await chrome.tabs.remove(tab.id).catch(() => {});
+      throw e;
+    }
     await loadAndWait(tab.id, () => chrome.tabs.update(tab.id, { url: href }));
     return describeTab(await chrome.tabs.get(tab.id));
   },
@@ -201,7 +222,7 @@ const commands = {
 
   async back({ tabId }) {
     const tab = await resolveTab(tabId);
-    requireAccess(tab);
+    await requireAccess(tab);
     // chrome.tabs.goBack skips history entries created without a real user
     // gesture, which is every entry the agent creates. history.back() doesn't.
     await loadAndWait(tab.id, () =>
@@ -218,12 +239,24 @@ const commands = {
 
   async snap({ tabId }) {
     const tab = await resolveTab(tabId);
-    requireAccess(tab);
+    await requireAccess(tab);
     if (!tab.active) {
       await chrome.tabs.update(tab.id, { active: true });
       await new Promise((r) => setTimeout(r, 250));
     }
+    // captureVisibleTab takes whatever is showing, so make sure the user didn't
+    // switch to another tab or page meanwhile.
+    const showing = async () => {
+      const [active] = await chrome.tabs.query({ active: true, windowId: tab.windowId });
+      return !!active && active.id === tab.id && (await hasSiteAccess(active.url));
+    };
+    if (!(await showing())) throw new Error('The shared tab is no longer the visible tab in its window. Try again.');
+    // Chrome only allows screenshots with access to all sites.
+    if (!(await chrome.permissions.contains({ origins: ['<all_urls>'] }))) {
+      throw new Error('Screenshots need access to all sites. Ask the user to click the Tab Steer toolbar icon and choose "Allow on all sites", or use "tabsteer read" instead.');
+    }
     const dataUrl = await chrome.tabs.captureVisibleTab(tab.windowId, { format: 'png' });
+    if (!(await showing())) throw new Error('The visible tab changed during the screenshot. Try again.');
     return { base64: dataUrl.replace(/^data:image\/png;base64,/, '') };
   },
 
@@ -262,12 +295,18 @@ async function handle(msg) {
   try {
     const paused = await isPaused();
     if (action === 'status') {
-      return { id, success: true, result: { version: VERSION, paused, sharedTabs: (await sharedTabs()).length } };
+      return { id, success: true, result: { version: VERSION, extensionId: chrome.runtime.id, paused, sharedTabs: (await sharedTabs()).length } };
     }
     if (paused) throw new Error('Tab Steer is paused by the user. Ask them to resume it from the Tab Steer toolbar icon.');
     const command = Object.hasOwn(commands, action) ? commands[action] : null;
     if (!command) throw new Error(`Unknown action: ${action}`);
-    return { id, success: true, result: await command(params) };
+    let result;
+    try {
+      result = await command(params);
+    } finally {
+      if (await isPaused()) throw new Error('Tab Steer was paused by the user while this command ran. Its result was discarded.');
+    }
+    return { id, success: true, result };
   } catch (e) {
     return { id, success: false, error: String((e && e.message) || e) };
   }

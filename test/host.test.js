@@ -93,6 +93,28 @@ test('host removes its socket when the browser disconnects', async () => {
   assert.ok(!fs.existsSync(socket));
 });
 
+test('a surviving host reclaims the socket when the newer one exits', async (t) => {
+  const home = fs.mkdtempSync(path.join(os.tmpdir(), 'ts-'));
+  const reply = (msg) => ({ id: msg.id, success: true, result: { version: 'test', paused: false, sharedTabs: 0 } });
+  const first = startHost(home, reply);
+  t.after(() => first.child.kill());
+  await first.acked;
+  const socket = path.join(home, 'tabsteer.sock');
+  await waitFor(socket);
+  const firstInode = fs.statSync(socket).ino;
+
+  const second = startHost(home, reply);
+  await second.acked;
+  for (let i = 0; i < 100 && fs.statSync(socket).ino === firstInode; i++) await new Promise((r) => setTimeout(r, 50));
+  const exited = new Promise((r) => second.child.on('exit', r));
+  second.child.stdin.end();
+  await exited;
+
+  await waitFor(socket);
+  const result = await cli(home, ['status', '--json']);
+  assert.strictEqual(result.code, 0, result.stderr);
+});
+
 test('CLI reports a clear error when nothing is listening', async () => {
   const home = fs.mkdtempSync(path.join(os.tmpdir(), 'ts-'));
   const result = await cli(home, ['status']);

@@ -110,20 +110,37 @@ const server = net.createServer((client) => {
 });
 
 let ownInode = null;
-try {
-  fs.unlinkSync(SOCKET_PATH);
-} catch (e) {}
-// Create the socket already private; chmod after listen would leave a window.
-const oldMask = process.umask(0o177);
-server.listen(SOCKET_PATH, () => {
-  process.umask(oldMask);
-  ownInode = fs.statSync(SOCKET_PATH).ino;
-  log(`listening on ${SOCKET_PATH}`);
-});
+let listening = false;
+
+function listen() {
+  try {
+    fs.unlinkSync(SOCKET_PATH);
+  } catch (e) {}
+  // Create the socket already private; chmod after listen would leave a window.
+  const oldMask = process.umask(0o177);
+  server.listen(SOCKET_PATH, () => {
+    process.umask(oldMask);
+    ownInode = fs.statSync(SOCKET_PATH).ino;
+    listening = true;
+    log(`listening on ${SOCKET_PATH}`);
+  });
+}
+
 server.on('error', (e) => {
   log(`socket error: ${e.message}`);
   process.exit(1);
 });
+listen();
+
+// With Tab Steer in more than one browser profile, each profile runs a host and
+// the newest one takes the socket. When that host exits it removes the socket,
+// so a surviving host takes it back instead of staying unreachable.
+setInterval(() => {
+  if (!listening || fs.existsSync(SOCKET_PATH)) return;
+  log('socket path is free again; reclaiming it');
+  listening = false;
+  server.close(() => listen());
+}, 2000).unref();
 
 function shutdown() {
   // Only remove the socket if a newer host hasn't replaced it.
