@@ -1,14 +1,11 @@
 const $ = (id) => document.getElementById(id);
 const ALL_SITES = { origins: ['<all_urls>'] };
 
-let tab = null;
-let sitePattern = null;
-
 const send = (type, extra = {}) => chrome.runtime.sendMessage({ type, ...extra });
 
 async function render() {
-  [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  const state = await send('ui:state', { tabId: tab ? tab.id : null });
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  const state = await send('ui:state', { tabId: tab ? tab.id : null, url: tab ? tab.url : null });
 
   const status = $('status');
   if (state.paused) {
@@ -23,60 +20,43 @@ async function render() {
   }
   $('setup').hidden = state.connected;
   $('host-error').textContent = state.hostError || '';
+  $('turn-on').hidden = state.turnedOn;
   $('pause').textContent = state.paused ? 'Resume' : 'Pause';
-  $('pause').onclick = async () => {
-    await send('ui:pause', { paused: !state.paused });
-    render();
-  };
   $('count').textContent = state.sharedCount === 1 ? '1 tab shared' : `${state.sharedCount} tabs shared`;
 
-  let url = null;
-  try {
-    url = tab && tab.url ? new URL(tab.url) : null;
-  } catch (e) {}
-  const shareable = !!url && (url.protocol === 'http:' || url.protocol === 'https:');
-  for (const id of ['share', 'unshare', 'allow', 'revoke', 'allow-all']) $(id).hidden = true;
-
-  if (!shareable) {
+  for (const id of ['share', 'unshare', 'allow', 'revoke']) $(id).hidden = true;
+  if (!state.origin) {
     $('site').textContent = 'This page';
     $('facts').textContent = "Tab Steer can't be used on this kind of page.";
-    return;
+  } else {
+    const host = new URL(state.origin).host;
+    $('site').textContent = host;
+    $('facts').textContent = `${state.shared ? 'Shared with your agent' : 'Not shared'} · ${state.siteAllowed ? 'site allowed' : 'site not allowed'}`;
+    $('share').hidden = state.shared;
+    $('unshare').hidden = !state.shared;
+    $('allow').hidden = state.siteAllowed || !state.shared;
+    $('allow').textContent = `Allow ${host}`;
+    $('revoke').hidden = !state.siteAllowed || state.allowAllSites;
+    $('revoke').textContent = `Stop allowing ${host}`;
   }
 
-  sitePattern = `${url.protocol}//${url.host}/*`;
-  const everywhere = await chrome.permissions.contains(ALL_SITES);
-  const allowed = everywhere || (await chrome.permissions.contains({ origins: [sitePattern] }));
-
-  $('site').textContent = url.host;
-  $('facts').textContent =
-    (state.shared ? 'Shared with your agent' : 'Not shared') +
-    ' · ' +
-    (everywhere ? 'all sites allowed' : allowed ? 'site allowed' : 'site not allowed');
-
-  $('share').hidden = state.shared;
-  $('unshare').hidden = !state.shared;
-  $('allow').hidden = allowed;
-  $('allow').textContent = `Allow on ${url.host}`;
-  $('revoke').hidden = !allowed;
-  $('revoke').textContent = everywhere ? 'Stop allowing all sites' : `Stop allowing ${url.host}`;
-  $('allow-all').hidden = everywhere;
-
-  // Sharing a tab is only useful with site access, so one click asks for both.
-  // The share message goes first because the permission prompt can close this popup.
+  // Permission prompts need the click itself, so they are requested straight
+  // from these handlers. Sharing also allows the tab's site.
+  const turnOn = () => (state.turnedOn ? Promise.resolve(true) : chrome.permissions.request(ALL_SITES));
+  $('turn-on-button').onclick = () => turnOn().then(render, render);
   $('share').onclick = () => {
-    const sharing = send('ui:share', { tabId: tab.id });
-    if (allowed) return sharing.then(render);
-    chrome.permissions.request({ origins: [sitePattern] }).then(render, render);
+    const sharing = send('ui:share', { tabId: tab.id, origin: state.origin });
+    turnOn().then(() => sharing).then(render, render);
   };
-  $('unshare').onclick = async () => {
-    await send('ui:unshare', { tabId: tab.id });
-    render();
+  $('unshare').onclick = () => send('ui:unshare', { tabId: tab.id }).then(render);
+  $('allow').onclick = () => {
+    const allowing = send('ui:allow', { origin: state.origin });
+    turnOn().then(() => allowing).then(render, render);
   };
-  $('allow').onclick = () => chrome.permissions.request({ origins: [sitePattern] }).then(render, render);
-  $('allow-all').onclick = () => chrome.permissions.request(ALL_SITES).then(render, render);
-  $('revoke').onclick = async () => {
-    await chrome.permissions.remove(everywhere ? ALL_SITES : { origins: [sitePattern] });
-    render();
+  $('revoke').onclick = () => send('ui:revoke', { origin: state.origin }).then(render);
+  $('pause').onclick = () => send('ui:pause', { paused: !state.paused }).then(render);
+  $('panel').onclick = () => {
+    chrome.sidePanel.open({ windowId: tab.windowId }).then(() => window.close(), () => {});
   };
 }
 

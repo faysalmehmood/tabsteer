@@ -4,7 +4,7 @@
 
 Chrome can be driven without any extension by attaching to its remote-debugging port, which is how Chrome DevTools MCP's `--autoConnect` works. That route has less to maintain and gives trusted input events.
 
-Tab Steer uses an extension anyway because debugging access is all-or-nothing: it reaches every tab and every site. The point of this project is a narrower grant — some tabs, some sites, revocable in one click — and only an extension can enforce that with state the agent cannot change.
+Tab Steer uses an extension anyway because debugging access is all-or-nothing: it reaches every tab and every site. The point of this project is a narrower grant: some tabs, some sites, revocable in one click. Only an extension can enforce that with state the agent cannot change.
 
 ## A CLI, not an MCP server
 
@@ -14,9 +14,11 @@ A CLI costs no context until it is used and works with any agent that can run a 
 
 Sharing needed to be visible at all times and changeable without opening a settings page. A tab group is both: it is drawn in the tab strip, and dragging a tab in or out is the grant.
 
-## Site access through Chrome's own permission prompt
+## Turn on once, allow sites in Tab Steer
 
-`optional_host_permissions` means the browser, not Tab Steer, enforces site access, and the grant needs a user gesture in the extension's window. It also keeps the install-time permission warning minimal.
+Tab Steer 0.1 asked Chrome for each site separately. That made Chrome the enforcer, but a prompt for every new site was friction, and Chrome allows tab screenshots only to extensions that can reach all sites.
+
+From 0.2, the user turns Tab Steer on once (Chrome's prompt for all sites), and the agent's access is limited by an allowed-site list kept in the extension. Sharing a tab allows its site in the same click. The agent cannot change the list, for the same reason it cannot share tabs: only the extension's own pages can. The cost is that Tab Steer's own check, not Chrome, now stands between the agent and an unallowed site, so that check is covered by end-to-end tests. Sites granted the 0.1 way keep working.
 
 ## Policy lives in the browser
 

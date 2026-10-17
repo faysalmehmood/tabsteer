@@ -72,11 +72,14 @@ async function main() {
 
   // The real popup, with a stand-in state: connected, tab shared, site allowed.
   const popup = await context.newPage();
-  await popup.setViewportSize({ width: 320, height: 300 });
+  await popup.setViewportSize({ width: 320, height: 200 });
   await popup.addInitScript(() => {
     chrome.tabs.query = async () => [{ id: 1, url: 'https://mail.example.com/inbox' }];
-    chrome.runtime.sendMessage = async () => ({ version: '0', connected: true, hostError: null, paused: false, sharedCount: 1, shared: true });
-    chrome.permissions.contains = async (p) => !p.origins.includes('<all_urls>');
+    chrome.runtime.sendMessage = async () => ({
+      version: '0', connected: true, hostError: null, paused: false, turnedOn: true, allowAllSites: false,
+      allowedSites: ['https://mail.example.com'], sharedCount: 1, shared: true,
+      origin: 'https://mail.example.com', siteAllowed: true,
+    });
   });
   await popup.goto(`chrome-extension://${id}/popup.html`);
   await popup.waitForTimeout(400);
@@ -92,6 +95,30 @@ async function main() {
     height: 800,
     init: () => {
       chrome.runtime.sendMessage = async () => ({ connected: true });
+    },
+  });
+  // The side panel, with a sample session of agent activity.
+  await shot({
+    url: `chrome-extension://${id}/panel.html`,
+    out: 'docs/assets/panel.png',
+    width: 360,
+    height: 640,
+    init: () => {
+      const now = Date.now();
+      const activity = [
+        { time: now - 52000, action: 'open', detail: 'https://localhost:5173/checkout', ok: true },
+        { time: now - 47000, action: 'read', detail: '3182 of 3182 characters', ok: true },
+        { time: now - 41000, action: 'type', detail: '16 characters into @kqzbwr7', ok: true },
+        { time: now - 38000, action: 'click', detail: 'button "Place order"', ok: true },
+        { time: now - 33000, action: 'wait', detail: 'Order confirmed', ok: true },
+        { time: now - 29000, action: 'snap', detail: null, ok: true },
+        { time: now - 12000, action: 'read', ok: false, error: 'Tab 1853 is on a site the user has not allowed.' },
+      ];
+      chrome.storage.session.get = async () => ({ activity });
+      chrome.runtime.sendMessage = async () => ({
+        connected: true, paused: false, turnedOn: true, allowAllSites: false,
+        allowedSites: ['http://localhost:5173', 'https://mail.example.com'],
+      });
     },
   });
   await shot({ html: PROMO, out: 'store/promo-440x280.png', width: 440, height: 280 });

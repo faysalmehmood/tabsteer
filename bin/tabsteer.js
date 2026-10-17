@@ -135,7 +135,8 @@ async function main() {
   switch (command) {
     case 'status': {
       const r = await request('status');
-      return out(r, `Connected (extension ${r.version})${r.paused ? ' — PAUSED by the user' : ''}\nShared tabs: ${r.sharedTabs}`);
+      const on = r.turnedOn === false ? '\nTurned on: no (screenshots and new sites need the user to choose "Turn on" in the Tab Steer icon)' : '';
+      return out(r, `Connected (extension ${r.version})${r.paused ? ', PAUSED by the user' : ''}\nShared tabs: ${r.sharedTabs}${on}`);
     }
     case 'tabs': {
       const r = await request('tabs');
