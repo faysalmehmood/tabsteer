@@ -443,7 +443,15 @@
       }
     }
     el.dispatchEvent(new KeyboardEvent('keyup', init));
-    return { pressed: key === ' ' ? 'Space' : key, on: el === document.body ? 'page' : refFor(el), did };
+    const result = { pressed: key === ' ' ? 'Space' : key, on: el === document.body ? 'page' : refFor(el), did };
+    // Password managers often cancel Enter on login forms. Say so instead of
+    // failing silently, and point at the submit button.
+    if (!proceed && key === 'Enter' && el.localName === 'input' && el.form) {
+      result.cancelled = true;
+      const submitter = el.form.querySelector('button:not([type]),button[type="submit"],input[type="submit"],input[type="image"]');
+      if (submitter) result.submitter = refFor(submitter);
+    }
+    return result;
   }
 
   function scroll({ direction, amount }) {

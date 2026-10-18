@@ -45,5 +45,5 @@ Add `--tab <id>` when more than one tab is shared, and `--json` for raw output.
 ## Limits
 
 - Values of password, payment and one-time-code fields are hidden, and `css=` selectors may not test field values.
-- Key presses are simulated: Enter submits forms and activates buttons, but other keys may not trigger a site's default behaviour.
+- Key presses are simulated: Enter submits forms and activates buttons, but other keys may not trigger a site's default behaviour. If Enter is cancelled (password managers often do this on login forms), the output says so and gives the `tabsteer click @ref` for the submit button.
 - Content inside cross-origin iframes is not readable.

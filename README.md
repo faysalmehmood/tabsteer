@@ -94,7 +94,10 @@ git clone https://github.com/faysalmehmood/tabsteer.git && cd tabsteer
 npm install && ./install.sh       # link tabsteer from this checkout
 npm test                          # host and CLI
 npx playwright install chromium && npm run test:e2e
+npm run smoke                     # before a release: checks in your real Chrome
 ```
+
+The e2e tests use a clean Chromium. `npm run smoke` runs the same kind of checks in your everyday Chrome, with your other extensions installed, and asks you to click Allow, Pause and Remove when needed. Run it on the release build before publishing.
 
 To run your own build of the extension, remove the store version, then load the `extension` folder with **Load unpacked** in `chrome://extensions`. Report security issues privately, as described in [SECURITY.md](SECURITY.md).
 

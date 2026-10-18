@@ -47,6 +47,12 @@ const FORM_PAGE = `<!doctype html><title>Fixture</title>
 
 const PAGES = {
   '/form': FORM_PAGE,
+  // A login form where something else (like a password manager) cancels Enter.
+  '/cancel': `<!doctype html><title>Cancel</title><form id="g"><label>User <input name="u"></label><button>Send</button></form><p id="sent"></p>
+<script>
+  g.addEventListener('submit', (e) => { e.preventDefault(); sent.textContent = 'Sent ' + g.u.value; });
+  addEventListener('keydown', (e) => { if (e.key === 'Enter') e.preventDefault(); });
+</script>`,
   '/next': '<!doctype html><title>Next</title><h1>Second page</h1><button>Add</button>',
   '/long': `<!doctype html><title>Long</title>${Array.from({ length: 600 }, (_, i) => `<p>Paragraph number ${i} with some filler words in it.</p>`).join('')}`,
 };
@@ -303,6 +309,17 @@ test('shared tabs with site access', async (t) => {
     assert.doesNotMatch(rest, /Paragraph number 0 /);
     assert.match(rest, /Paragraph number 599 /);
     assert.doesNotMatch(rest, /truncated/);
+  });
+
+  await t.test('a cancelled Enter is reported with the submit button, and "type @ref text" works', async () => {
+    await ok('navigate', `${base}/cancel`);
+    const field = refOf(await ok('read'), /\[input:text "User" value="" (@[a-z]{6}\d+)\]/);
+    assert.match(await ok('type', field, 'ada'), /Typed into .*"ada"/);
+    const pressed = await ok('press', 'Enter', '--into', field);
+    const submit = refOf(pressed, /cancelled it.*tabsteer click (@[a-z]{6}\d+)/);
+    assert.doesNotMatch(await ok('read'), /Sent ada/);
+    await ok('click', submit);
+    await ok('wait', 'Sent ada');
   });
 
   await t.test('only http and https URLs are accepted', async () => {
