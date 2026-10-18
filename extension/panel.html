@@ -32,10 +32,8 @@
     <span class="pill" id="status">…</span>
   </header>
 
-  <section>
-    <h2><span>Activity</span><button class="small" id="clear">Clear</button></h2>
-    <p class="note" id="activity-empty">Nothing yet. Commands your agent runs appear here.</p>
-    <ol id="activity" aria-live="polite"></ol>
+  <section id="off" hidden>
+    <p class="note"><strong>Tab Steer is turned off for websites.</strong> Open the toolbar icon and choose Turn on.</p>
   </section>
 
   <section>
@@ -46,8 +44,10 @@
       <span>Allow every site. Your agent can then act on any site in a shared tab, including ones it navigates to.</span></label>
   </section>
 
-  <section id="off" hidden>
-    <p class="note"><strong>Tab Steer is turned off for websites.</strong> Open the toolbar icon and choose Turn on.</p>
+  <section>
+    <h2><span>Activity</span><button class="small" id="clear">Clear</button></h2>
+    <p class="note" id="activity-empty">Nothing yet. Commands your agent runs appear here.</p>
+    <ol id="activity" aria-live="polite"></ol>
   </section>
 
   <script src="panel.js"></script>
