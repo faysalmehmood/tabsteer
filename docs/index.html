@@ -57,6 +57,8 @@
     h2 { font-size: 30px; letter-spacing: -0.01em; margin: 0 0 10px; text-wrap: balance; }
     .sub { color: var(--muted); margin: 0 0 32px; max-width: 46em; }
     .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .grid.four { grid-template-columns: repeat(4, 1fr); }
+    .card code { font-size: 0.82em; word-break: break-word; }
     .card { background: var(--soft); border: 1px solid var(--line); border-radius: 14px; padding: 20px; }
     .card h3 { margin: 0 0 6px; font-size: 17px; }
     .card p { margin: 0; color: var(--muted); font-size: 15.5px; }
@@ -72,10 +74,11 @@
     footer { border-top: 1px solid var(--line); padding: 28px 0 48px; color: var(--muted); font-size: 14.5px; display: flex; flex-wrap: wrap; gap: 8px 24px; }
     footer span { flex: 1; min-width: 220px; }
 
+    @media (max-width: 1000px) and (min-width: 821px) { .grid.four { grid-template-columns: repeat(2, 1fr); } }
     @media (max-width: 820px) {
       .hero, .split { grid-template-columns: 1fr; gap: 32px; }
       .hero { padding: 28px 0 48px; }
-      .grid { grid-template-columns: 1fr; }
+      .grid, .grid.four { grid-template-columns: 1fr; }
       header.top nav a:not(.keep) { display: none; }
       section { padding: 48px 0; }
     }
@@ -87,9 +90,9 @@
     <img src="assets/logo.svg" alt="">
     <strong>Tab Steer</strong>
     <nav>
-      <a href="#how">How it works</a>
-      <a href="#safety">Safety</a>
-      <a href="#install">Get started</a>
+      <a href="#setup">Set up</a>
+      <a href="#use">Use it</a>
+      <a href="#control">Control</a>
       <a class="keep" href="https://github.com/faysalmehmood/tabsteer">GitHub</a>
     </nav>
   </header>
@@ -98,73 +101,71 @@
     <div class="hero">
       <div>
         <h1>Hand your coding agent a tab, not your browser.</h1>
-        <p class="lede">Tab Steer lets AI coding agents read and act on pages in your real, logged-in Chrome. They reach only the tabs you share and the sites you allow, and you can pause them with one click.</p>
+        <p class="lede">Tab Steer lets Claude Code, Codex, Cursor and other coding agents read and use pages in your real, logged-in Chrome. Only in the tabs you share, on the sites you allow.</p>
         <div class="actions">
           <a class="btn primary" href="https://chromewebstore.google.com/detail/tab-steer/mkpmilnglglhiaeojeeioafmbjjghmed">Add to Chrome</a>
-          <a class="btn" href="https://github.com/faysalmehmood/tabsteer">View on GitHub</a>
+          <a class="btn" href="#setup">How to set up</a>
         </div>
-        <p class="meta">Free and open source (Apache-2.0). macOS and Linux. Chrome, Brave, Edge and other Chromium browsers.</p>
+        <p class="meta">Free and open source. macOS and Linux. Chrome, Brave, Edge and other Chromium browsers.</p>
       </div>
-      <div class="term" role="img" aria-label="Terminal session: an agent opens a page, reads it, and clicks a link by reference.">
-<pre><span class="dim">$</span> tabsteer open news.ycombinator.com
-Opened tab 1853312301
+      <div class="term" role="img" aria-label="You ask the agent to test a signup form. The agent reads the shared tab, types an email and clicks Create account.">
+<pre><span class="dim">You:</span> Test the signup form on localhost:5173.
 
+<span class="dim">Agent runs:</span>
 <span class="dim">$</span> tabsteer read
-# Hacker News
-[new](newest) <span class="hl">@kqzbwr2</span> | [past](front) <span class="hl">@kqzbwr3</span> | ...
+# Sign up
+[input:email "Email" <span class="hl">@kqzbwr4</span>]
+[button "Create account" <span class="hl">@kqzbwr9</span>]
+<span class="dim">$</span> tabsteer type "test@example.com" --into <span class="hl">@kqzbwr4</span>
+<span class="dim">$</span> tabsteer click <span class="hl">@kqzbwr9</span>
 
-<span class="dim">$</span> tabsteer click <span class="hl">@kqzbwr2</span>
-Clicked link "new" @kqzbwr2</pre>
+<span class="dim">Agent:</span> The form submits, but the error message
+overlaps the button on narrow screens.</pre>
       </div>
     </div>
 
-    <section id="how">
-      <h2>Works with any agent that can run a command</h2>
-      <p class="sub">Claude Code, Antigravity, Codex, Cursor, or a plain shell script. There is no server to configure and nothing added to the model's context until a command is actually run.</p>
-      <div class="grid steps">
-        <div class="card"><h3>Share a tab</h3><p>Click the Tab Steer icon on a tab and share it. Shared tabs sit in a visible tab group, so you always know what the agent can reach.</p></div>
-        <div class="card"><h3>The agent reads it</h3><p><code>tabsteer read</code> returns the page as compact Markdown. Every link, button and field carries a short reference.</p></div>
-        <div class="card"><h3>The agent acts</h3><p>It clicks, types and waits by reference, so it acts on exactly the element it read. Unclear targets are refused, never guessed.</p></div>
+    <section id="setup">
+      <h2>Set up in four steps</h2>
+      <p class="sub">You need Node.js 18 or newer.</p>
+      <div class="grid four steps">
+        <div class="card"><h3>Add the extension</h3><p>From the <a href="https://chromewebstore.google.com/detail/tab-steer/mkpmilnglglhiaeojeeioafmbjjghmed">Chrome Web Store</a>. Click <strong>Turn on</strong> on the welcome page.</p></div>
+        <div class="card"><h3>Install the companion</h3><p>In a terminal:<br><code>npm install -g tabsteer</code><br><code>tabsteer install</code></p></div>
+        <div class="card"><h3>Teach your agent</h3><p><code>tabsteer install --agent claude</code> (or <code>antigravity</code>). For other agents, add <a href="https://github.com/faysalmehmood/tabsteer/blob/main/docs/agent-snippet.md">this snippet</a> to your rules.</p></div>
+        <div class="card"><h3>Share a tab</h3><p>Click the Tab Steer icon on the page and choose <strong>Share this tab with your agent</strong>.</p></div>
       </div>
     </section>
 
-    <section id="safety">
+    <section id="use">
+      <h2>Then just ask your agent</h2>
+      <p class="sub">The agent reads the page as compact text and acts on exact elements. You watch it happen in the tab.</p>
+      <div class="grid">
+        <div class="card"><h3>Test your app</h3><p>"Open localhost:5173, fill in the signup form and tell me what breaks."</p></div>
+        <div class="card"><h3>Read what needs your login</h3><p>"Read the error on the Sentry page I shared and find the cause in this repo."</p></div>
+        <div class="card"><h3>Reproduce a bug</h3><p>"Follow the steps in issue #42 in my shared tab and take a screenshot."</p></div>
+      </div>
+    </section>
+
+    <section id="control">
       <div class="split">
         <div>
-          <h2>Built around limits you control</h2>
-          <p class="sub">An agent in your logged-in browser acts as you. Tab Steer starts with no access and keeps every control in your hands, inside the browser, where the agent cannot change it.</p>
+          <h2>You stay in control</h2>
+          <p class="sub">An agent in your browser acts as you, so every limit lives in the extension, where the agent can't change it.</p>
           <ul class="plain">
-            <li><strong>Shared tabs only.</strong> Drag a tab into the group to share it, drag it out to stop.</li>
-            <li><strong>Allowed sites only.</strong> The extension installs with access to no sites. You grant each one.</li>
-            <li><strong>See everything.</strong> The Activity panel lists each action as it happens.</li>
+            <li><strong>Shared tabs only.</strong> The agent works only in the "Tab Steer" tab group.</li>
+            <li><strong>Allowed sites only.</strong> Sharing a tab allows its site. Remove sites at any time.</li>
+            <li><strong>See everything.</strong> The Activity panel lists each action live. Typed text is never logged.</li>
             <li><strong>One-click pause.</strong> Every command stops until you resume.</li>
-            <li><strong>Nothing listening on the network.</strong> The tool talks to the browser over a private local socket.</li>
-            <li><strong>Passwords stay hidden.</strong> Password and payment field values are never returned.</li>
-            <li><strong>No tracking.</strong> Nothing is collected or sent anywhere. <a href="privacy.html">Privacy policy</a>.</li>
+            <li><strong>Secrets stay hidden.</strong> Password, payment and one-time-code values are never returned.</li>
+            <li><strong>Local only.</strong> No network listener and no tracking. <a href="privacy.html">Privacy policy</a>.</li>
           </ul>
         </div>
-        <img src="assets/popup.png" alt="The Tab Steer popup showing a shared tab on an allowed site, with buttons to stop sharing, stop allowing the site, and pause.">
+        <img src="assets/panel.png" alt="The Tab Steer Activity panel: a live list of the agent's actions and the allowed sites.">
       </div>
-    </section>
-
-    <section id="install">
-      <h2>Install</h2>
-      <p class="sub">Add the extension from the <a href="https://chromewebstore.google.com/detail/tab-steer/mkpmilnglglhiaeojeeioafmbjjghmed">Chrome Web Store</a>, then install the command-line companion. Requires Node.js 18 or newer.</p>
-      <div class="term">
-<pre><span class="dim">$</span> npm install -g tabsteer
-<span class="dim">$</span> tabsteer install</pre>
-      </div>
-      <p class="meta">Then click <strong>Turn on</strong> on the welcome page, and share a tab from the Tab Steer icon. Full steps are in the <a href="https://github.com/faysalmehmood/tabsteer#get-started">README</a>.</p>
-    </section>
-
-    <section>
-      <h2>Use it responsibly</h2>
-      <p class="sub">Some websites prohibit automated access in their terms and may restrict accounts that use it. You are responsible for the sites you point Tab Steer at. It has no features for evading bot detection, and none will be added. Read the <a href="https://github.com/faysalmehmood/tabsteer/blob/main/docs/threat-model.md">threat model</a> before using it on accounts that matter.</p>
     </section>
   </main>
 
   <footer>
-    <span>Tab Steer is an independent open-source project, not affiliated with Google, OpenAI or Anthropic.</span>
+    <span>Tab Steer is an independent open-source project (Apache-2.0), not affiliated with Google, OpenAI or Anthropic. Some sites prohibit automated access; you are responsible for where you use it. <a href="https://github.com/faysalmehmood/tabsteer/blob/main/docs/threat-model.md">Threat model</a>.</span>
     <a href="https://github.com/faysalmehmood/tabsteer">GitHub</a>
     <a href="privacy.html">Privacy</a>
     <a href="https://github.com/faysalmehmood/tabsteer/security">Security</a>
