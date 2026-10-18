@@ -167,11 +167,18 @@ async function main() {
       return out(r, `Clicked ${r.kind} "${r.label}" ${r.ref}${r.covered ? ' (warning: another element was on top of it)' : ''}`);
     }
     case 'type': {
-      const r = await request('type', { tabId, text: need(rest[0], 'type <text> [--into <ref>]'), into: flags.into });
+      // Also accept "type @ref <text>", the order agents tend to guess.
+      const refFirst = !flags.into && rest.length > 1 && /^@[a-z]{6}\d+$/.test(rest[0]);
+      const text = refFirst ? rest[1] : need(rest[0], 'type <text> [--into <ref>]');
+      const r = await request('type', { tabId, text, into: refFirst ? rest[0] : flags.into });
       return out(r, `Typed into ${r.ref}: "${r.value}"`);
     }
     case 'press': {
       const r = await request('press', { tabId, key: need(rest[0], 'press <key>'), into: flags.into });
+      if (r.cancelled) {
+        return out(r, `Pressed ${r.pressed} on ${r.on}, but the page or another extension cancelled it, so nothing was submitted.` +
+          (r.submitter ? ` To submit, run: tabsteer click ${r.submitter}` : ''));
+      }
       return out(r, `Pressed ${r.pressed} on ${r.on}${r.did ? ` (${r.did})` : ''}`);
     }
     case 'scroll': {

@@ -1,7 +1,7 @@
 # Chrome Web Store listing
 
 Copy these into the Developer Dashboard. Files to upload are in this folder,
-and the zip comes from `scripts/package-extension.sh` (current: `dist/tabsteer-extension-0.2.0.zip`).
+and the zip comes from `scripts/package-extension.sh` (current: `dist/tabsteer-extension-0.2.1.zip`).
 
 ## Store listing tab
 
